@@ -98,7 +98,19 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data)
 
     def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='', picBase64Buf='', fileMd5=''):
-        """发送群图片"""
+        """发送群图片
+        Tips:
+            [秀图id] 各id对应效果
+            40000   秀图
+            40001   幻影
+            40002   抖动
+            40003   生日
+            40004   爱你
+            40005   征友
+            40006   无(只显示大图无特效)
+
+            [PICFLAG] 改变图文消息顺序
+        """
         data = {
             "toUser": toUser,
             "sendToType": 2,
