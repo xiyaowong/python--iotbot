@@ -19,11 +19,13 @@ class Action:
         self.__host = host
 
     def bind_bot(self, bot: IOTBOT):
+        """绑定机器人"""
         self.qq = bot.qq
         self.__port = bot.port
         self.__host = bot.host
 
     def send_friend_text_msg(self, toUser: int, content: str) -> dict:
+        """发送好友文本消息"""
         data = {
             "toUser": toUser,
             "sendToType": 1,
@@ -33,7 +35,6 @@ class Action:
             "atUser": 0,
             "replayInfo": None
         }
-        print(data)
         return self.baseSender('POST', 'SendMsg', data)
 
     def get_user_list(self) -> dict:
@@ -70,7 +71,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_group_text_msg(self, toUser: int, content='', atUser=0):
+    def send_group_text_msg(self, toUser: int, content='', atUser=0) -> dict:
+        """发送群文字消息"""
         data = {
             "toUser": toUser,
             "sendToType": 2,
@@ -81,7 +83,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf=''):
+    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='') -> dict:
+        """发送群语音"""
         data = {
             "toUser": toUser,
             "sendToType": 2,
@@ -95,6 +98,19 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data)
 
     def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='', picBase64Buf='', fileMd5=''):
+        """发送群图片
+        Tips:
+            [秀图id] 各id对应效果
+            40000   秀图
+            40001   幻影
+            40002   抖动
+            40003   生日
+            40004   爱你
+            40005   征友
+            40006   无(只显示大图无特效)
+
+            [PICFLAG] 改变图文消息顺序
+        """
         data = {
             "toUser": toUser,
             "sendToType": 2,
@@ -110,6 +126,7 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data)
 
     def send_private_text_msg(self, toUser: int, content: str, groupid: int) -> dict:
+        """发送私聊文字消息"""
         data = {
             "toUser": toUser,
             "sendToType": 3,
@@ -120,7 +137,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf=''):
+    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf='') -> dict:
+        """发送私聊语音"""
         data = {
             "toUser": toUser,
             "sendToType": 3,
@@ -133,7 +151,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='', fileMd5=''):
+    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='', fileMd5='') -> dict:
+        """发送私聊图片"""
         data = {
             "toUser": toUser,
             "sendToType": 3,
@@ -147,10 +166,23 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def get_cookies(self):
+    def search_group(self, content, page=0) -> dict:
+        """搜索群组"""
+        return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page})
+
+    def get_cookies(self) -> dict:
+        """获取cookies"""
         return self.baseSender('GET', 'GetUserCook')
 
-    def baseSender(self, method: str, funcname: str, data=None, timeout: int = None):
+    def get_group_list(self) -> dict:
+        """获取群组列表"""
+        return self.baseSender('POST', 'GetGroupList', {"NextToken": ""})
+
+    def get_group_user_list(self, groupid: int) -> dict:
+        """获取群成员列表"""
+        return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0})
+
+    def baseSender(self, method: str, funcname: str, data=None, timeout: int = None) -> dict:
         params = {
             'funcname': funcname,
             'timeout': timeout or self.__timeout,
