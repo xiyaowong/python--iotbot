@@ -71,7 +71,7 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_group_text_msg(self, toUser: int, content='', atUser=0):
+    def send_group_text_msg(self, toUser: int, content='', atUser=0) -> dict:
         """发送群文字消息"""
         data = {
             "toUser": toUser,
@@ -83,7 +83,7 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
-    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf=''):
+    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='') -> dict:
         """发送群语音"""
         data = {
             "toUser": toUser,
