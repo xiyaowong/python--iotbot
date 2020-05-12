@@ -94,6 +94,7 @@ action.send_friend_pic_msg(ctx.FromUin, picUrl='https://t.cn/A6Am7xYO', flashPic
 所以你可以这样,在命令行中
 
 ```bash
+$iotbot --help
 $iotbot -n app -q 123456
 # 或者
 $iotbot
