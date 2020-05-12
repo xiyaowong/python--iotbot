@@ -1,4 +1,4 @@
-"""Author: wongxy
+"""Author: wongxy github.com/xiyaowong
 
 from iotbot import IOTBOT, GroupMsg, FriendMsg
 
