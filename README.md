@@ -115,7 +115,7 @@ $iotbot
 
 [mcoo/iotqq-plugins-demo](https://github.com/mcoo/iotqq-plugins-demo)
 
-部分参考
+少部分参考
 
 ## LICENSE
 
