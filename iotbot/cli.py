@@ -23,6 +23,7 @@ def cli():
         with open(f'{fileName}.py', 'w') as f:
             f.write(temp)
 
+        print()
         print('创建成功~')
         print(f"""
 执行如下命令：python {fileName}.py
