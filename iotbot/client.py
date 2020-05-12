@@ -40,7 +40,7 @@ class IOTBOT:
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
             self.socketio.wait()
         except Exception:
-            sys.stdout.write('启动失败，请检查是否启动IOTBOT。。。')
+            sys.stdout.write('启动失败，请检查是否已启动IOTBOT。。。')
             sys.exit(1)
 
     def connect(self):
