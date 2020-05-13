@@ -200,7 +200,7 @@ class Action:
                 timeout=self.__timeout
             )
             rep.raise_for_status()
-            if not rep.json()['Ret'] == 0:
+            if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
                 sys.stdout.write(f'请求发送成功, 但事件响应失败: {rep.json()}')
             return rep.json()
         except Exception as e:
