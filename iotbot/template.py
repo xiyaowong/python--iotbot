@@ -11,6 +11,7 @@ action = Action(bot_qq)
 
 @bot.on_group_msg
 def on_group_msg(ctx: GroupMsg):
+    print(ctx.message)
     if ctx.Content == '.test':
         print('CurrentQQ: ', ctx.get('CurrentQQ'))
         print('CurrentPacket: ', ctx.get('CurrentPacket'))
@@ -26,9 +27,10 @@ def on_group_msg(ctx: GroupMsg):
 
 @bot.on_friend_msg
 def on_friend_msg(ctx: FriendMsg):
-    print(ctx.Content)
-    print(ctx.FromUin)
+    print(ctx.message)
     if ctx.Content == '.test':
+        print(ctx.Content)
+        print(ctx.FromUin)
         print('OK')
         print('发送闪照：', action.send_friend_pic_msg(ctx.FromUin, 'https://t.cn/A6Am7xYO', flashPic=True))
         action.send_friend_text_msg(ctx.FromUin, '成功')
