@@ -6,15 +6,15 @@ class GroupMsg:
 
         # ========================================
         # 代码提示
-        self.FromGroupId = None
-        self.FromGroupName = None
-        self.FromUserId = None
-        self.FromNickName = None
-        self.Content = None
-        self.MsgType = None
-        self.MsgTime = None
-        self.MsgSeq = None
-        self.MsgRandom = None
+        self.FromGroupId = 0
+        self.FromGroupName = ''
+        self.FromUserId = 0
+        self.FromNickName = ''
+        self.Content = ''
+        self.MsgType = ''
+        self.MsgTime = 0
+        self.MsgSeq = 0
+        self.MsgRandom = 0
         self.RedBaginfo = None
         # ========================================
 
@@ -55,11 +55,11 @@ class FriendMsg:
 
         # ========================================
         # 代码提示
-        self.FromUin = None
-        self.ToUin = None
-        self.MsgType = None
-        self.MsgSeq = None
-        self.Content = None
+        self.FromUin = 0
+        self.ToUin = 0
+        self.MsgType = ''
+        self.MsgSeq = 0
+        self.Content = ''
         self.RedBaginfo = None
         # ========================================
 
