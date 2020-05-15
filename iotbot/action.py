@@ -228,6 +228,7 @@ class Action:
         :param timeout: 发送请求等待响应的时间
         :param api_path: 默认为/v1/LuaApiCaller
         :param iot_timeout: IOT端处理请求等待的时间
+        :param bot_qq: 机器人QQ
         """
 
         params = {
