@@ -185,6 +185,14 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data)
 
+    def revoke_msg(self, groupid: int, msgseq: int, msgrandom: int, type_=1, timeout=5) -> dict:
+        """撤回消息
+        :param type_: 1: RevokeMsg | 2: PbMessageSvc.PbMsgWithDraw
+        """
+        funcname = 'RevokeMsg' if type_ == 1 else 'PbMessageSvc.PbMsgWithDraw'
+        data = {"GroupID": groupid, "MsgSeq": msgseq, "MsgRandom": msgrandom}
+        return self.baseSender('POST', funcname, data, timeout=timeout)
+
     def search_group(self, content, page=0) -> dict:
         """搜索群组"""
         return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page})
@@ -209,9 +217,10 @@ class Action:
         :param timeout: 请求等待响应的时间
         :param api_path: 默认为/v1/LuaApiCaller
         """
+
         params = {
             'funcname': funcname,
-            'timeout': timeout or self.__timeout,
+            'timeout': self.__timeout,
             'qq': self.qq
         }
         if data is None:
