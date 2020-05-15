@@ -2,8 +2,16 @@ import io
 
 from setuptools import setup
 
-with open('./README.md', encoding='utf-8') as f:
-    long_description = f.read()
+
+def read_files(files):
+    data = []
+    for file in files:
+        with io.open(file, encoding='utf-8') as f:
+            data.append(f.read())
+    return "\n".join(data)
+
+
+long_description = read_files(['README.md', 'CHANGELOG.md'])
 
 meta = {}
 
