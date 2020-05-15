@@ -209,6 +209,10 @@ class Action:
         """获取群成员列表"""
         return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
 
+    def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs):
+        """设置群成员头衔"""
+        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title}, timeout, **kwargs)
+
     def baseSender(self,
                    method: str,
                    funcname: str,
