@@ -31,7 +31,7 @@ class Action:
         self.__port = bot.port
         self.__host = bot.host
 
-    def send_friend_text_msg(self, toUser: int, content: str, timeout=5) -> dict:
+    def send_friend_text_msg(self, toUser: int, content: str, timeout=5, **kwargs) -> dict:
         """发送好友文本消息"""
         data = {
             "toUser": toUser,
@@ -42,13 +42,13 @@ class Action:
             "atUser": 0,
             "replayInfo": None
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def get_user_list(self) -> dict:
+    def get_user_list(self, timeout=5, **kwargs) -> dict:
         """获取好友列表"""
-        return self.baseSender('post', 'GetQQUserList', {"StartIndex": 0})
+        return self.baseSender('post', 'GetQQUserList', {"StartIndex": 0}, timeout=timeout, **kwargs)
 
-    def send_friend_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='', timeout=5) -> dict:
+    def send_friend_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='', timeout=5, **kwargs) -> dict:
         """发送好友语音消息"""
         data = {
             "toUser": toUser,
@@ -60,9 +60,9 @@ class Action:
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_friend_pic_msg(self, toUser, content='', picUrl='', picBase64Buf='', fileMd5='', flashPic=False, timeout=5) -> dict:
+    def send_friend_pic_msg(self, toUser, content='', picUrl='', picBase64Buf='', fileMd5='', flashPic=False, timeout=5, **kwargs) -> dict:
         """发送好友图片消息"""
         data = {
             "toUser": toUser,
@@ -76,9 +76,9 @@ class Action:
             "fileMd5": fileMd5,
             "flashPic": flashPic
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_text_msg(self, toUser: int, content='', atUser=0) -> dict:
+    def send_group_text_msg(self, toUser: int, content='', atUser=0, timeout=5, **kwargs) -> dict:
         """发送群文字消息"""
         data = {
             "toUser": toUser,
@@ -88,9 +88,9 @@ class Action:
             "groupid": 0,
             "atUser": atUser
         }
-        return self.baseSender('POST', 'SendMsg', data)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='', timeout=5) -> dict:
+    def send_group_voice_msg(self, toUser, voiceUrl='', voiceBase64Buf='', timeout=5, **kwargs) -> dict:
         """发送群语音"""
         data = {
             "toUser": toUser,
@@ -102,9 +102,9 @@ class Action:
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='', picBase64Buf='', fileMd5='', timeout=3):
+    def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='', picBase64Buf='', fileMd5='', timeout=3, **kwargs):
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
@@ -130,9 +130,9 @@ class Action:
             "fileMd5": fileMd5,
             "flashPic": flashPic
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_text_msg(self, toUser: int, content: str, groupid: int) -> dict:
+    def send_private_text_msg(self, toUser: int, content: str, groupid: int, timeout=5, **kwargs) -> dict:
         """发送私聊文字消息"""
         data = {
             "toUser": toUser,
@@ -142,9 +142,9 @@ class Action:
             "groupid": groupid,
             "atUser": 0
         }
-        return self.baseSender('POST', 'SendMsg', data)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf='', timeout=5) -> dict:
+    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf='', timeout=5, **kwargs) -> dict:
         """发送私聊语音"""
         data = {
             "toUser": toUser,
@@ -156,9 +156,9 @@ class Action:
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='', fileMd5='', timeout=5) -> dict:
+    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='', fileMd5='', timeout=5, **kwargs) -> dict:
         """发送私聊图片"""
         data = {
             "toUser": toUser,
@@ -171,9 +171,9 @@ class Action:
             "picBase64Buf": picBase64Buf,
             "fileMd5": fileMd5
         }
-        return self.baseSender('POST', 'SendMsg', data, timeout)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_json_msg(self, toUser: int, content='', atUser=0) -> dict:
+    def send_group_json_msg(self, toUser: int, content='', atUser=0, timeout=5, **kwargs) -> dict:
         """发送群Json类型信息"""
         data = {
             "toUser": toUser,
@@ -183,45 +183,53 @@ class Action:
             "groupid": 0,
             "atUser": atUser
         }
-        return self.baseSender('POST', 'SendMsg', data)
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def revoke_msg(self, groupid: int, msgseq: int, msgrandom: int, type_=1, timeout=5) -> dict:
+    def revoke_msg(self, groupid: int, msgseq: int, msgrandom: int, type_=1, timeout=5, **kwargs) -> dict:
         """撤回消息
         :param type_: 1: RevokeMsg | 2: PbMessageSvc.PbMsgWithDraw
         """
         funcname = 'RevokeMsg' if type_ == 1 else 'PbMessageSvc.PbMsgWithDraw'
         data = {"GroupID": groupid, "MsgSeq": msgseq, "MsgRandom": msgrandom}
-        return self.baseSender('POST', funcname, data, timeout=timeout)
+        return self.baseSender('POST', funcname, data, timeout, **kwargs)
 
-    def search_group(self, content, page=0) -> dict:
+    def search_group(self, content, page=0, timeout=5, **kwargs) -> dict:
         """搜索群组"""
-        return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page})
+        return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page}, timeout, **kwargs)
 
-    def get_cookies(self) -> dict:
+    def get_cookies(self, timeout=2, **kwargs) -> dict:
         """获取cookies"""
-        return self.baseSender('GET', 'GetUserCook')
+        return self.baseSender('GET', 'GetUserCook', timeout=timeout, **kwargs)
 
-    def get_group_list(self) -> dict:
+    def get_group_list(self, timeout=5, **kwargs) -> dict:
         """获取群组列表"""
-        return self.baseSender('POST', 'GetGroupList', {"NextToken": ""})
+        return self.baseSender('POST', 'GetGroupList', {"NextToken": ""}, timeout, **kwargs)
 
-    def get_group_user_list(self, groupid: int) -> dict:
+    def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
         """获取群成员列表"""
-        return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0})
+        return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
 
-    def baseSender(self, method: str, funcname: str, data=None, timeout: int = None, api_path=None) -> dict:
+    def baseSender(self,
+                   method: str,
+                   funcname: str,
+                   data: dict = None,
+                   timeout: int = None,
+                   api_path: str = None,
+                   iot_timeout: int = None,
+                   bot_qq: int = None) -> dict:
         """
         :param method: 请求方法
         :param funcname: 请求类型
         :param data: post的数据
-        :param timeout: 请求等待响应的时间
+        :param timeout: 发送请求等待响应的时间
         :param api_path: 默认为/v1/LuaApiCaller
+        :param iot_timeout: IOT端处理请求等待的时间
         """
 
         params = {
             'funcname': funcname,
-            'timeout': self.__timeout,
-            'qq': self.qq
+            'timeout': iot_timeout or self.__timeout,
+            'qq': bot_qq or self.qq
         }
         if data is None:
             data = {}
@@ -236,7 +244,7 @@ class Action:
             )
             rep.raise_for_status()
             if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
-                sys.stdout.write(f'请求发送成功, 但事件响应失败: {rep.json()}')
+                sys.stdout.write(f'请求发送成功, 但处理失败: {rep.json()}')
             return rep.json()
         except Exception as e:
             if isinstance(e, Timeout):
