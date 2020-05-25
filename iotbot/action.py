@@ -4,8 +4,6 @@
 响应时间会较长，而且目前来看，如果文件较大导致上传时间太长，IOTBOT端会报错, IOTBOT响应的结果一定是错误的,
 不过发送去的操作是能正常完成的。
 """
-import sys
-
 import requests
 from requests.exceptions import Timeout
 
@@ -185,6 +183,18 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
+    def send_group_xml_msg(self, toUser: int, content='', atUser=0, timeout=5, **kwargs) -> dict:
+        """发送群Xml类型信息"""
+        data = {
+            "toUser": toUser,
+            "sendToType": 2,
+            "sendMsgType": "XmlMsg",
+            "content": content,
+            "groupid": 0,
+            "atUser": atUser
+        }
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
+
     def revoke_msg(self, groupid: int, msgseq: int, msgrandom: int, type_=1, timeout=5, **kwargs) -> dict:
         """撤回消息
         :param type_: 1: RevokeMsg | 2: PbMessageSvc.PbMsgWithDraw
@@ -249,11 +259,11 @@ class Action:
             )
             rep.raise_for_status()
             if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
-                sys.stdout.write(f'请求发送成功, 但处理失败: {rep.json()}')
+                print(f'请求发送成功, 但处理失败: {rep.json()}')
             return rep.json()
         except Exception as e:
             if isinstance(e, Timeout):
-                sys.stdout.write('响应超时，但不代表处理未成功,结果未知!')
+                print('响应超时，但不代表处理未成功,结果未知!')
                 return {}
-            sys.stderr.write(f'出现错误: {e}')
+            print(f'出现错误: {e}')
             return {}
