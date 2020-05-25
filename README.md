@@ -12,13 +12,13 @@ Tips: 因为本身只是对接口的封装，并没有什么实质性的亮点�
 
 ## 安装
 
-```bash
+```shell
 pip install python-iotbot
 ```
 
 或者
 
-```bash
+```shell
 git clone https://github.com/XiyaoWong/python-iotbot
 cd python-iotbot
 python setup.py install
@@ -26,7 +26,7 @@ python setup.py install
 
 或者
 
-```bash
+```shell
 pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
 ```
 
@@ -93,11 +93,11 @@ action.send_friend_pic_msg(ctx.FromUin, picUrl='https://t.cn/A6Am7xYO', flashPic
 你会发现有几段代码都是固定的，创建机器人对象，写装饰器
 所以你可以这样,在命令行中
 
-```bash
-$iotbot --help
-$iotbot -n app -q 123456
+```shell
+iotbot --help
+iotbot -n app -q 123456
 # 或者
-$iotbot
+iotbot
 ```
 
 ```
