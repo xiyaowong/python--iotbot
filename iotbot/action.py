@@ -297,7 +297,7 @@ class Action:
             return rep.json()
         except Exception as e:
             if isinstance(e, Timeout):
-                print('响应超时，但不代表处理未成功,结果未知!')
+                print('响应超时，但不代表处理未成功, 结果未知!')
                 return {}
             print(f'出现错误: {e}')
             return {}

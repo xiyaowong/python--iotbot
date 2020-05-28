@@ -6,19 +6,45 @@ def cli():
     parser = argparse.ArgumentParser(description='iotbot模板生成')
     parser.add_argument('-n', default='bot', type=str, help='生成的文件名')
     parser.add_argument('-q', default=12345678, type=int, help='机器人QQ号')
+    parser.add_argument('-p', default=None, type=str, help='插件名')
 
     args = parser.parse_args()
     fileName = args.n
-    q = args.q
+    qq = args.q
+    plug_name = args.p
+
+    if plug_name is not None:
+        file = f'bot_{plug_name}.py'
+        if input(f'将生成{file}，这是覆盖写操作，确定？ y/N ').lower() == 'y':
+            with open(file, 'w') as f:
+                f.write("""from iotbot import GroupMsg, FriendMsg
+
+
+# 下面三个函数名不能改，否则不会调用
+# 但是都是可选项，建议把不需要用到的函数删除，节约资源
+
+def receive_group_msg(ctx: GroupMsg):
+    pass
+
+def receive_friend_msg(ctx: FriendMsg):
+    pass
+
+def receive_events(ctx: dict):
+    pass""")
+            print('OK!')
+            return
+        else:
+            print('bye~')
+            return
 
     template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.py')
 
-    c = input(f'将创建{fileName}.py文件, 机器人QQ为：{q}。是否确定？ y/N: ')
+    c = input(f'将创建{fileName}.py文件, 机器人QQ为：{qq}。是否确定？ y/N: ')
     if c.lower() == 'y':
         with open(template_path, 'r') as f:
             temp = f.read()
 
-        temp = temp.replace('bot_qq = 11', f'bot_qq = {q}')
+        temp = temp.replace('bot_qq = 11', f'bot_qq = {qq}')
 
         with open(f'{fileName}.py', 'w') as f:
             f.write(temp)

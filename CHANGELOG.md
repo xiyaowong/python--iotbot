@@ -8,3 +8,11 @@
 	- `api_path` `default=/v1/LuaApiCaller`
 	- `iot_timeout`  `default=self.timeout=10` IOTBOT端处理允许等待的时间
     - `bot_qq`  `default=self.qq` 机器人QQ号
+
+### 1.0.0 - 2020-05-28
+
+#### 大改动
+1. 插件化
+2. 效率更高，不漏消息
+3. 更多快捷方法
+4. 更多自定义参数
