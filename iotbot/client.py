@@ -27,8 +27,8 @@ class IOTBOT:
     :param host: ip，需要包含协议
     """
 
-    def __init__(self, qq: str, port=8888, beat_delay=60, host='http://127.0.0.1'):
-        self.qq = str(qq)
+    def __init__(self, qq: int, port=8888, beat_delay=60, host='http://127.0.0.1'):
+        self.qq = qq
         self.host = host
         self.port = port
         self.beat_delay = beat_delay
@@ -39,14 +39,14 @@ class IOTBOT:
         try:
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
             self.socketio.wait()
-        except Exception:
-            sys.stdout.write('启动失败，请检查是否已启动IOTBOT。。。')
+        except Exception as e:
+            print(f'启动失败，请检查是否已启动IOTBOT。。。[ERROR]{e}')
             sys.exit(1)
 
     def connect(self):
         print('Connected to server successfully!')
         while True:
-            self.socketio.emit('GetWebConn', self.qq)
+            self.socketio.emit('GetWebConn', str(self.qq))
             time.sleep(self.beat_delay)
 
     def __initialize_socketio(self):

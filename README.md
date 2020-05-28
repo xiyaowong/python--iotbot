@@ -26,7 +26,9 @@ python setup.py install
 
 或者
 
+推荐
 ```shell
+```bash
 pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
 ```
 
@@ -76,7 +78,9 @@ def event(message: dict):
 from iotbot import Action
 
 ...
-action = Action(qq) # action = Action(); action.bind_bot(bot)
+action = Action(qq) 
+# action = Action(); action.bind_bot(bot)
+# action = Action(bot) # type(bot) == IOTBOT
 
 # 发送好友消息
 action.send_friend_text_msg(ctx.FromUin, '成功')
