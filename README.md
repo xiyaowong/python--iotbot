@@ -142,12 +142,13 @@ def receive_friend_msg(ctx: FriendMsg):
     pass
 
 def receive_events(ctx: dict):
-    pass""")
+    pass
 
 ```
 
 #### 插件文件名需以`bot_`开头命名
 
+### 不管是手动添加还是插件形式，都是同样的`receiver`函数，运行起来的行为完全一致
 
 ## 还是麻烦？
 
