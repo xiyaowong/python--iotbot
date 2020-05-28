@@ -27,8 +27,8 @@ python setup.py install
 或者
 
 推荐
+
 ```shell
-```bash
 pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
 ```
 
