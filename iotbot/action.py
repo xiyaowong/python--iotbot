@@ -11,17 +11,28 @@ from .client import IOTBOT
 
 
 class Action:
+    '''
+
+    :params qq_or_bot: qq号或者机器人实例(`IOTBOT`)
+    :params timeout: 等待IOTBOT响应时间，不是发送请求的延时
+    :params api_path: 方法路径
+
+    '''
+
     def __init__(self,
-                 qq='',
+                 qq_or_bot=None,
                  timeout=10,
                  api_path='/v1/LuaApiCaller',
                  port=8888,
                  host='http://127.0.0.1'):
-        self.qq = qq
         self.__timeout = timeout
         self.__api_path = api_path
         self.__port = port
         self.__host = host
+        if isinstance(qq_or_bot, IOTBOT):
+            self.bind_bot(qq_or_bot)
+        else:
+            self.qq = int(qq_or_bot)
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
@@ -60,7 +71,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_friend_pic_msg(self, toUser, content='', picUrl='', picBase64Buf='', fileMd5='', flashPic=False, timeout=5, **kwargs) -> dict:
+    def send_friend_pic_msg(self, toUser, content='', picUrl='', picBase64Buf='', fileMd5='',
+                            flashPic=False, timeout=5, **kwargs) -> dict:
         """发送好友图片消息"""
         data = {
             "toUser": toUser,
@@ -102,7 +114,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='', picBase64Buf='', fileMd5='', timeout=3, **kwargs):
+    def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='',
+                           picBase64Buf='', fileMd5='', timeout=3, **kwargs) -> dict:
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
@@ -156,7 +169,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='', fileMd5='', timeout=5, **kwargs) -> dict:
+    def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='',
+                             fileMd5='', timeout=5, **kwargs) -> dict:
         """发送私聊图片"""
         data = {
             "toUser": toUser,
@@ -207,6 +221,10 @@ class Action:
         """搜索群组"""
         return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page}, timeout, **kwargs)
 
+    def get_user_info(self, userID: int, timeout=5, **kwargs) -> dict:
+        '''获取用户信息'''
+        return self.baseSender('POST', 'GetUserInfo', {'UserID': userID, 'GroupID': 0}, timeout, **kwargs)
+
     def get_cookies(self, timeout=2, **kwargs) -> dict:
         """获取cookies"""
         return self.baseSender('GET', 'GetUserCook', timeout=timeout, **kwargs)
@@ -219,9 +237,25 @@ class Action:
         """获取群成员列表"""
         return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
 
-    def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs):
+    def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs) -> dict:
         """设置群成员头衔"""
-        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title},
+                               timeout, **kwargs)
+
+    def modify_group_card(self, userID: int, groupID: int, newNick: str, timeout=5, **kwargs) -> dict:
+        '''修改群名片
+
+        :params userID: 修改的QQ号
+        :params groupID: 群号
+        :params newNick: 新群名片
+
+        '''
+        data = {
+            'UserID': userID,
+            'GroupID': groupID,
+            'NewNick': newNick
+        }
+        return self.baseSender('POST', 'ModifyGroupCard', data, timeout, **kwargs)
 
     def baseSender(self,
                    method: str,

@@ -7,6 +7,8 @@ bot = IOTBOT(bot_qq)
 action = Action(bot_qq)
 # action = Action()
 # action.bind_bot(bot)
+# 或
+# action = Action(bot)
 
 
 @bot.on_group_msg
