@@ -121,8 +121,8 @@ class IOTBOT:
                 i.clear()
             print('Loading plugins...')
             for plugin_name in plugin_names:
-                temp = __import__(f'{self.plugin_dir}.{plugin_name}')  # pylint: disable=unused-variable
-                plugin = eval(f'temp.{plugin_name}')  # pylint: disable=eval-used
+                plugin = getattr(__import__(f'{self.plugin_dir}.{plugin_name}'),
+                                 plugin_name)
                 if hasattr(plugin, 'receive_friend_msg'):
                     self.__friend_msg_receivers_from_plugin.append(plugin.receive_friend_msg)
                 if hasattr(plugin, 'receive_group_msg'):
