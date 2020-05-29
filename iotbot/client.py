@@ -113,7 +113,8 @@ class IOTBOT:
             self.logger.info('未开启插件功能!')
             return
         try:
-            plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir) if i.startswith('bot_')]
+            plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir)
+                            if i.startswith('bot_') and i.endswith('.py')]
             # 将原始清空，防止重复添加，这里用集合不能解决问题
             for i in [self.__group_msg_receivers_from_plugin,
                       self.__friend_msg_receivers_from_plugin,
