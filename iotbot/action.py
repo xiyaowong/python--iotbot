@@ -8,6 +8,7 @@ import requests
 from requests.exceptions import Timeout
 
 from .client import IOTBOT
+from .logger import Logger
 
 
 class Action:
@@ -15,6 +16,7 @@ class Action:
 
     :params qq_or_bot: qq号或者机器人实例(`IOTBOT`)
     :params timeout: 等待IOTBOT响应时间，不是发送请求的延时
+    :params log_file_path: 日志文件路径
     :params api_path: 方法路径
 
     '''
@@ -22,6 +24,7 @@ class Action:
     def __init__(self,
                  qq_or_bot=None,
                  timeout=10,
+                 log_file_path=None,
                  api_path='/v1/LuaApiCaller',
                  port=8888,
                  host='http://127.0.0.1'):
@@ -33,6 +36,7 @@ class Action:
             self.bind_bot(qq_or_bot)
         else:
             self.qq = int(qq_or_bot)
+        self.logger = Logger(log_file_path)
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
@@ -293,11 +297,11 @@ class Action:
             )
             rep.raise_for_status()
             if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
-                print(f'请求发送成功, 但处理失败: {rep.json()}')
+                self.logger.error(f'请求发送成功, 但处理失败: {rep.json()}')
             return rep.json()
         except Exception as e:
             if isinstance(e, Timeout):
-                print('响应超时，但不代表处理未成功, 结果未知!')
+                self.logger.warning('响应超时，但不代表处理未成功, 结果未知!')
                 return {}
-            print(f'出现错误: {e}')
+            self.logger.error(f'出现错误: {e}')
             return {}

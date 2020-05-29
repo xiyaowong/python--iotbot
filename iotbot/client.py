@@ -1,17 +1,15 @@
 # pylint: disable = too-many-instance-attributes
+import logging
 import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
-import colorama
 import socketio
-from colorama import Fore
 
+from .logger import Logger
 from .model import model_map
-
-colorama.init(autoreset=True)
 
 
 def _deco_creater(bind_type):
@@ -30,6 +28,8 @@ class IOTBOT:
     :param qq: 机器人QQ号
     :param use_plugins: 是否开启插件功能
     :param plugin_dir: 插件存放目录
+    :param log: 是否开启log
+    :param log_file_path: 日志文件路径
     :param port: 运行端口
     :param beat_delay: 心跳延时时间（s）
     :param host: ip，需要包含协议
@@ -39,6 +39,8 @@ class IOTBOT:
                  qq: int,
                  use_plugins=False,
                  plugin_dir='plugins',
+                 log=True,
+                 log_file_path=None,
                  port=8888,
                  beat_delay=60,
                  host='http://127.0.0.1'):
@@ -48,6 +50,9 @@ class IOTBOT:
         self.host = host
         self.port = port
         self.beat_delay = beat_delay
+        self.logger = Logger(log_file_path)
+        if not log:
+            logging.disable()
 
         self.__friend_msg_receivers_from_hand = []
         self.__group_msg_receivers_from_hand = []
@@ -66,14 +71,15 @@ class IOTBOT:
 
     def run(self):
         try:
+            self.logger.info('Connecting to the server...')
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
             self.socketio.wait()
         except Exception as e:
-            print(Fore.RED + f'启动失败，请检查是否已启动IOTBOT。。。[ERROR]{e}')
+            self.logger.error(f'启动失败 -> {e}')
             sys.exit(1)
 
     def connect(self):
-        print(Fore.GREEN + 'Connected to server successfully!')
+        self.logger.info('Connected to server successfully!')
         while True:
             self.socketio.emit('GetWebConn', str(self.qq))
             time.sleep(self.beat_delay)
@@ -92,7 +98,7 @@ class IOTBOT:
 
     @receivers.setter
     def receivers(self, _):
-        print(Fore.RED + 'the attribute receivers is read-only!')
+        self.logger.warning('The attribute receivers is read-only!')
 
     def __initialize_socketio(self):
         self.socketio = socketio.Client()
@@ -104,7 +110,7 @@ class IOTBOT:
     def refresh_plugins(self):
         '''刷新插件'''
         if not self.use_plugins:
-            print('尚未开启插件功能!')
+            self.logger.info('未开启插件功能!')
             return
         try:
             plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir) if i.startswith('bot_')]
@@ -113,7 +119,7 @@ class IOTBOT:
                       self.__friend_msg_receivers_from_plugin,
                       self.__event_receivers_from_plugin]:
                 i.clear()
-            print(Fore.YELLOW + 'Loading plugins...')
+            print('Loading plugins...')
             for plugin_name in plugin_names:
                 temp = __import__(f'{self.plugin_dir}.{plugin_name}')  # pylint: disable=unused-variable
                 plugin = eval(f'temp.{plugin_name}')  # pylint: disable=eval-used
@@ -126,10 +132,10 @@ class IOTBOT:
             print(f'[Friend Msg Receivers] \t{len(self.__friend_msg_receivers_from_plugin)}')
             print(f'[Group Msg Receivers] \t{len(self.__group_msg_receivers_from_plugin)}')
             print(f'[Event Receivers] \t{len(self.__event_receivers_from_plugin)}')
-            print(Fore.GREEN + 'Load plugins completely!')
+            print('Load plugins completely!')
             self.__refresh_executor()
         except FileNotFoundError:
-            print(Fore.RED + f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
+            self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
 
     def __refresh_executor(self):
         # 根据函数处理数量初始化线程池
