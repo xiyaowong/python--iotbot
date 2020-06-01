@@ -9,7 +9,7 @@ from typing import Callable
 import socketio
 
 from .logger import Logger
-from .model import model_map
+from .model import model_map, GroupMsg, FriendMsg
 
 
 def _deco_creater(bind_type):
@@ -39,6 +39,7 @@ class IOTBOT:
                  qq: int,
                  use_plugins=False,
                  plugin_dir='plugins',
+                 group_blacklist: list = None,
                  log=True,
                  log_file_path=None,
                  port=8888,
@@ -47,6 +48,7 @@ class IOTBOT:
         self.qq = qq
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
+        self.group_blacklist = group_blacklist or []
         self.host = host
         self.port = port
         self.beat_delay = beat_delay
@@ -171,20 +173,21 @@ class IOTBOT:
         if worker_exception:
             raise worker_exception
 
-    def __friend_msg_handler(self, context):
+    def __friend_msg_handler(self, msg):
+        context = model_map['OnFriendMsgs'](msg)  # type:FriendMsg
         for f_receiver in [*self.__friend_msg_receivers_from_hand, *self.__friend_msg_receivers_from_plugin]:
-            self.__executor.submit(f_receiver,
-                                   model_map['OnFriendMsgs'](context)).add_done_callback(self.__thread_pool_callback)
+            self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
 
-    def __group_msg_handler(self, context):
+    def __group_msg_handler(self, msg):
+        context = model_map['OnGroupMsgs'](msg)  # type:GroupMsg
+        if context.FromGroupId in self.group_blacklist:
+            return
         for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
-            self.__executor.submit(g_receiver,
-                                   model_map['OnGroupMsgs'](context)).add_done_callback(self.__thread_pool_callback)
+            self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
 
-    def __event_handler(self, context):
+    def __event_handler(self, msg):
         for e_receiver in [*self.__event_receivers_from_hand, *self.__event_receivers_from_plugin]:
-            self.__executor.submit(e_receiver,
-                                   context).add_done_callback(self.__thread_pool_callback)
+            self.__executor.submit(e_receiver, msg).add_done_callback(self.__thread_pool_callback)
 
     def __initialize_handlers(self):
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
