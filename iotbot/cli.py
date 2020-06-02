@@ -16,7 +16,7 @@ def cli():
     if plug_name is not None:
         file = f'bot_{plug_name}.py'
         if input(f'将生成{file}，这是覆盖写操作，确定？ y/N ').lower() == 'y':
-            with open(file, 'w') as f:
+            with open(file, 'w', encoding='utf-8') as f:
                 f.write("""from iotbot import GroupMsg, FriendMsg
 
 
@@ -41,12 +41,12 @@ def receive_events(ctx: dict):
 
     c = input(f'将创建{fileName}.py文件, 机器人QQ为：{qq}。是否确定？ y/N: ')
     if c.lower() == 'y':
-        with open(template_path, 'r') as f:
+        with open(template_path, 'r', encoding='utf-8') as f:
             temp = f.read()
 
         temp = temp.replace('bot_qq = 11', f'bot_qq = {qq}')
 
-        with open(f'{fileName}.py', 'w') as f:
+        with open(f'{fileName}.py', 'w', encoding='utf-8') as f:
             f.write(temp)
 
         print()

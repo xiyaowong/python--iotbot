@@ -166,6 +166,21 @@ class IOTBOT:
         self.__event_receivers_from_hand.append(func)
 
     ########################################################################
+    # context distributor
+    ########################################################################
+    def __friend_context_distributor(self, context: FriendMsg):
+        for f_receiver in [*self.__friend_msg_receivers_from_hand, *self.__friend_msg_receivers_from_plugin]:
+            self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
+
+    def __group_context_distributor(self, context: GroupMsg):
+        for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
+            self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
+
+    def __event_context_distributor(self, context):
+        for e_receiver in [*self.__event_receivers_from_hand, *self.__event_receivers_from_plugin]:
+            self.__executor.submit(e_receiver, context).add_done_callback(self.__thread_pool_callback)
+
+    ########################################################################
     # message handler
     ########################################################################
     def __thread_pool_callback(self, worker):
@@ -175,24 +190,21 @@ class IOTBOT:
 
     def __friend_msg_handler(self, msg):
         context = model_map['OnFriendMsgs'](msg)  # type:FriendMsg
-        for f_receiver in [*self.__friend_msg_receivers_from_hand, *self.__friend_msg_receivers_from_plugin]:
-            self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
+        self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
         context = model_map['OnGroupMsgs'](msg)  # type:GroupMsg
         if context.FromGroupId in self.group_blacklist:
             return
-        for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
-            self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
+        self.__executor.submit(self.__group_context_distributor, context)
 
-    def __event_handler(self, msg):
-        for e_receiver in [*self.__event_receivers_from_hand, *self.__event_receivers_from_plugin]:
-            self.__executor.submit(e_receiver, msg).add_done_callback(self.__thread_pool_callback)
+    def __event_msg_handler(self, msg):
+        self.__executor.submit(self.__event_context_distributor, msg)
 
     def __initialize_handlers(self):
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
-        self.socketio.on('OnEvents')(self.__event_handler)
+        self.socketio.on('OnEvents')(self.__event_msg_handler)
     ########################################################################
 
     on_group_msg = _deco_creater('OnGroupMsgs')
