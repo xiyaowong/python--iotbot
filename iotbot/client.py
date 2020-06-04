@@ -28,6 +28,8 @@ class IOTBOT:
     :param qq: 机器人QQ号
     :param use_plugins: 是否开启插件功能
     :param plugin_dir: 插件存放目录
+    :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
+    :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
     :param log: 是否开启log
     :param log_file_path: 日志文件路径
     :param port: 运行端口
@@ -40,6 +42,7 @@ class IOTBOT:
                  use_plugins=False,
                  plugin_dir='plugins',
                  group_blacklist: list = None,
+                 friend_whitelist: list = None,
                  log=True,
                  log_file_path=None,
                  port=8888,
@@ -49,6 +52,7 @@ class IOTBOT:
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
         self.group_blacklist = group_blacklist or []
+        self.friend_whitelist = friend_whitelist or []
         self.host = host
         self.port = port
         self.beat_delay = beat_delay
@@ -190,6 +194,9 @@ class IOTBOT:
 
     def __friend_msg_handler(self, msg):
         context = model_map['OnFriendMsgs'](msg)  # type:FriendMsg
+        if self.friend_whitelist:
+            if context.FromUin not in self.friend_whitelist:
+                return
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
