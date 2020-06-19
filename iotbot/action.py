@@ -261,6 +261,16 @@ class Action:
         }
         return self.baseSender('POST', 'ModifyGroupCard', data, timeout, **kwargs)
 
+    def refresh_keys(self) -> bool:
+        '''刷新key二次登陆, 成功返回True， 失败返回False'''
+        try:
+            rep = requests.get(f'http://127.0.0.1:8888/v1/RefreshKeys?qq={self.qq}', timeout=20)
+            if rep.json()['Ret'] == 'ok':
+                return True
+        except Exception:
+            pass
+        return False
+
     def baseSender(self,
                    method: str,
                    funcname: str,

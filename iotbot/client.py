@@ -1,4 +1,5 @@
 # pylint: disable = too-many-instance-attributes
+import importlib
 import logging
 import os
 import sys
@@ -7,9 +8,10 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 
 import socketio
+from prettytable import PrettyTable
 
 from .logger import Logger
-from .model import model_map, GroupMsg, FriendMsg
+from .model import FriendMsg, GroupMsg, model_map
 
 
 def _deco_creater(bind_type):
@@ -126,20 +128,43 @@ class IOTBOT:
                       self.__friend_msg_receivers_from_plugin,
                       self.__event_receivers_from_plugin]:
                 i.clear()
-            print('Loading plugins...')
+            plugin_count = {'friend': [], 'group': [], 'event': []}  # 无关紧要的东西，用来临时保存插件信息
             for plugin_name in plugin_names:
-                plugin = getattr(__import__(f'{self.plugin_dir}.{plugin_name}'),
-                                 plugin_name)
+                plugin = getattr(__import__(f'{self.plugin_dir}.{plugin_name}'), plugin_name)
+                importlib.reload(plugin)
                 if hasattr(plugin, 'receive_friend_msg'):
                     self.__friend_msg_receivers_from_plugin.append(plugin.receive_friend_msg)
+                    plugin_count['friend'].append(plugin_name)
                 if hasattr(plugin, 'receive_group_msg'):
                     self.__group_msg_receivers_from_plugin.append(plugin.receive_group_msg)
+                    plugin_count['group'].append(plugin_name)
                 if hasattr(plugin, 'receive_events'):
                     self.__event_receivers_from_plugin.append(plugin.receive_events)
-            print(f'[Friend Msg Receivers] \t{len(self.__friend_msg_receivers_from_plugin)}')
-            print(f'[Group Msg Receivers] \t{len(self.__group_msg_receivers_from_plugin)}')
-            print(f'[Event Receivers] \t{len(self.__event_receivers_from_plugin)}')
-            print('Load plugins completely!')
+                    plugin_count['event'].append(plugin_name)
+            ################构建提示信息##################
+            temp = {'friend': [], 'group': [], 'event': []}
+            for category, statistic in plugin_count.items():
+                for item in set(statistic):
+                    temp[category].append(('{}<{}>'.format(item, statistic.count(item))))
+
+            table = PrettyTable(['Receiver', 'Count', 'Info'])
+            table.add_row([
+                'Friend Msg Receiver',
+                len(self.__friend_msg_receivers_from_plugin),
+                ' '.join(temp['friend'])
+            ])
+            table.add_row([
+                'Group  Msg Receiver',
+                len(self.__group_msg_receivers_from_plugin),
+                ' '.join(temp['group'])
+            ])
+            table.add_row([
+                'Event      Receiver',
+                len(self.__event_receivers_from_plugin),
+                ' '.join(temp['event'])
+            ])
+            print(table)
+            ###############################################
             self.__refresh_executor()
         except FileNotFoundError:
             self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
@@ -217,3 +242,6 @@ class IOTBOT:
     on_group_msg = _deco_creater('OnGroupMsgs')
     on_friend_msg = _deco_creater('OnFriendMsgs')
     on_event = _deco_creater('OnEvents')
+
+    def __repr__(self):
+        return f'IOTBOT <{self.qq}>'
