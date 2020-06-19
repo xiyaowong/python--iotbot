@@ -115,11 +115,11 @@ class IOTBOT:
     ########################################################################
     # 处理信息接收函数
     ########################################################################
-    def refresh_plugins(self):
+    def refresh_plugins(self)->bool:
         '''刷新插件'''
         if not self.use_plugins:
             self.logger.info('未开启插件功能!')
-            return
+            return False
         try:
             plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir)
                             if i.startswith('bot_') and i.endswith('.py')]
@@ -166,8 +166,10 @@ class IOTBOT:
             print(table)
             ###############################################
             self.__refresh_executor()
+            return True
         except FileNotFoundError:
             self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
+            return False
 
     def __refresh_executor(self):
         # 根据函数处理数量初始化线程池
