@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 test.py
+test_plugins
