@@ -12,14 +12,12 @@ from .logger import Logger
 
 
 class Action:
-    '''
-
+    """
     :params qq_or_bot: qq号或者机器人实例(`IOTBOT`)
     :params timeout: 等待IOTBOT响应时间，不是发送请求的延时
     :params log_file_path: 日志文件路径
     :params api_path: 方法路径
-
-    '''
+    """
 
     def __init__(self,
                  qq_or_bot=None,
@@ -119,7 +117,7 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='',
-                           picBase64Buf='', fileMd5='', timeout=3, **kwargs) -> dict:
+                           picBase64Buf='', fileMd5='', timeout=5, **kwargs) -> dict:
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
@@ -226,7 +224,7 @@ class Action:
         return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page}, timeout, **kwargs)
 
     def get_user_info(self, userID: int, timeout=5, **kwargs) -> dict:
-        '''获取用户信息'''
+        """获取用户信息"""
         return self.baseSender('POST', 'GetUserInfo', {'UserID': userID, 'GroupID': 0}, timeout, **kwargs)
 
     def get_cookies(self, timeout=2, **kwargs) -> dict:
@@ -247,13 +245,13 @@ class Action:
                                timeout, **kwargs)
 
     def modify_group_card(self, userID: int, groupID: int, newNick: str, timeout=5, **kwargs) -> dict:
-        '''修改群名片
+        """修改群名片
 
         :params userID: 修改的QQ号
         :params groupID: 群号
         :params newNick: 新群名片
 
-        '''
+        """
         data = {
             'UserID': userID,
             'GroupID': groupID,
@@ -261,10 +259,68 @@ class Action:
         }
         return self.baseSender('POST', 'ModifyGroupCard', data, timeout, **kwargs)
 
+    def get_friend_deal(self, data: dict, timeout=5, **kwargs) -> dict:
+        """处理好友请求"""
+        # data = {'UserID': 123456789,
+        #         'FromType': 1234,
+        #         'Field_9': 1592883849000000,
+        #         'Content': '收到好友请求 内容我是炫耘来源来自QQ号查找',
+        #         'FromGroupId': 0,
+        #         'FromGroupName': '',
+        #         'Action': 11}
+        return self.baseSender('POST', 'DealFriend', data, timeout, **kwargs)
+
+    def get_group_answer_invite(self, data: dict, timeout=5, **kwargs) -> dict:
+        """处理群邀请"""
+        # data = {"Seq": seq,
+        #         "Type": 1,
+        #         "MsgTypeStr": "邀请加群",
+        #         "Who": 123456789,
+        #         "WhoName": "QQ棒棒冰",
+        #         "MsgStatusStr": "",
+        #         "Flag_7": 123,
+        #         "Flag_8": 123,
+        #         "GroupId": 123456789,
+        #         "GroupName": "123",
+        #         "InviteUin": 123456789,
+        #         "InviteName": "123",
+        #         "Action": zx
+        #         }
+        return self.baseSender('POST', 'AnswerInviteGroup', data, timeout, **kwargs)
+
+    def get_open_redbag(self, data: dict, timeout=5, **kwargs):
+        """打开红包"""
+        return self.baseSender('POST', 'OpenRedBag', data, timeout, **kwargs)
+
+    # def get_friend_add(self, userID: int, timeout=5, **kwargs) -> dict:
+    #     """添加好友"""
+    #     data = {"AddUserUid": 123456789, "FromGroupID": 123456789, "AddFromSource": 2004, "Content": "加好友，互助浇水"}
+    #     return self.baseSender('POST', 'AddQQUser', data, timeout, **kwargs)
+
+    def get_group_mgr(self,actiontype: int, toUser: int, atUser=0, content='', timeout=5, **kwargs):
+        """QQ群功能包加群 拉人 踢群 退群
+        # ActionType = 8 拉人入群 -->{"ActionType": 8, "GroupID": 123456, "ActionUserID": 987654, "Content": ""}
+        # ActionType = 1 加入群聊 -->{"ActionType": 1, "GroupID": 123456, "ActionUserID": 0, "Content": "你好通过一下"}
+        # ActionType = 2 退出群聊 -->{"ActionType": 2, "GroupID": 123456, "ActionUserID": 0, "Content": ""}
+        # ActionType = 3 移出群聊 -->{"ActionType": 3, "GroupID": 123456, "ActionUserID": 987654, "Content": ""}
+        """
+        data = {
+            "ActionType": actiontype,  # 群操作类型
+            "GroupID": toUser,  # 目标群ID
+            "ActionUserID": atUser,  # 移除群的UserID
+            "Content": content  # 加群理由
+        }
+        return self.baseSender('POST', 'GroupMgr', data, timeout, **kwargs)
+
+    def get_qq_zan(self, atUser=0, timeout=5, **kwargs):
+        """QQ赞"""
+        data = {"UserID": atUser}
+        return self.baseSender('POST', 'OpenRedBag', data, timeout, **kwargs)
+
     def refresh_keys(self) -> bool:
-        '''刷新key二次登陆, 成功返回True， 失败返回False'''
+        """刷新key二次登陆, 成功返回True， 失败返回False"""
         try:
-            rep = requests.get(f'http://127.0.0.1:8888/v1/RefreshKeys?qq={self.qq}', timeout=20)
+            rep = requests.get(f'{self.__host}:8888/v1/RefreshKeys?qq={self.qq}', timeout=20)
             if rep.json()['Ret'] == 'ok':
                 return True
         except Exception:
@@ -315,3 +371,4 @@ class Action:
                 return {}
             self.logger.error(f'出现错误: {e}')
             return {}
+
