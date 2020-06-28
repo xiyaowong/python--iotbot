@@ -44,9 +44,6 @@ class GroupMsg:
     def __getitem__(self, item):
         return self.message.get(item)
 
-    def __dict__(self, item):
-        return self.message.get(item)
-
 
 class FriendMsg:
     def __init__(self, message: dict):
@@ -83,9 +80,6 @@ class FriendMsg:
         return self.message.get(item)
 
     def __getitem__(self, item):
-        return self.message.get(item)
-
-    def __dict__(self, item):
         return self.message.get(item)
 
 
