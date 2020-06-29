@@ -16,6 +16,7 @@ Welcome to python-iotbot's documentation!
    CLIENT
    ACTION
    PLUGIN
+   DECORATORS
    SCAFFOLD
    OTHER
    SAMPLE
