@@ -4,6 +4,8 @@
 响应时间会较长，而且目前来看，如果文件较大导致上传时间太长，IOTBOT端会报错, IOTBOT响应的结果一定是错误的,
 不过发送去的操作是能正常完成的。
 """
+import json
+
 import requests
 from requests.exceptions import Timeout
 
@@ -13,12 +15,12 @@ from .logger import Logger
 
 class Action:
     '''
-
-    :params qq_or_bot: qq号或者机器人实例(`IOTBOT`)
-    :params timeout: 等待IOTBOT响应时间，不是发送请求的延时
-    :params log_file_path: 日志文件路径
-    :params api_path: 方法路径
-
+    :param qq_or_bot: qq号或者机器人实例(`IOTBOT`)
+    :param timeout: 等待IOTBOT响应时间，不是发送请求的延时
+    :param log_file_path: 日志文件路径
+    :param api_path: 方法路径
+    :param port: 端口
+    :param host: ip
     '''
 
     def __init__(self,
@@ -190,7 +192,11 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_group_json_msg(self, toUser: int, content='', atUser=0, timeout=5, **kwargs) -> dict:
-        """发送群Json类型信息"""
+        """发送群Json类型信息
+        :param content: 可以为json文本，或者字典类型
+        """
+        if isinstance(content, dict):
+            content = json.dumps(content)
         data = {
             "toUser": toUser,
             "sendToType": 2,
@@ -243,8 +249,7 @@ class Action:
 
     def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs) -> dict:
         """设置群成员头衔"""
-        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title},
-                               timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title}, timeout, **kwargs)
 
     def modify_group_card(self, userID: int, groupID: int, newNick: str, timeout=5, **kwargs) -> dict:
         '''修改群名片
@@ -261,15 +266,41 @@ class Action:
         }
         return self.baseSender('POST', 'ModifyGroupCard', data, timeout, **kwargs)
 
-    def refresh_keys(self) -> bool:
+    def refresh_keys(self, timeout=20) -> bool:
         '''刷新key二次登陆, 成功返回True， 失败返回False'''
         try:
-            rep = requests.get(f'http://127.0.0.1:8888/v1/RefreshKeys?qq={self.qq}', timeout=20)
+            rep = requests.get(f'{self.__host}:{self.__port}/v1/RefreshKeys?qq={self.qq}', timeout=timeout)
             if rep.json()['Ret'] == 'ok':
                 return True
         except Exception:
             pass
         return False
+
+    def add_friend(self, userID: int, groupID: int, content='加个好友!', AddFromSource=2004, timeout=20, **kwargs) -> dict:
+        """添加好友"""
+        data = {
+            "AddUserUid": userID,
+            "FromGroupID": groupID,
+            "AddFromSource": AddFromSource,
+            "Content": content
+        }
+        return self.baseSender('POST', 'AddQQUser', data, timeout, **kwargs)
+
+    def deal_friend(self) -> dict:
+        """处理好友请求"""
+        # TODO
+
+    def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
+        """开启全员禁言"""
+        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 1}, timeout, **kwargs)
+
+    def all_shut_up_off(self, groupid, timeout=20, **kwargs) -> dict:
+        """关闭全员禁言"""
+        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 0}, timeout, **kwargs)
+
+    def you_shut_up(self, groupid, userid, shut_time=0, timeout=20, **kwargs) -> dict:
+        """群成员禁言"""
+        return self.baseSender('POST', '', {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time}, timeout, **kwargs)
 
     def baseSender(self,
                    method: str,
