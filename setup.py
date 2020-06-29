@@ -34,7 +34,7 @@ setup(
                       'requests >= 2.23.0', 'colorama >= 0.4.3', 'prettytable >= 0.7.2'],
     entry_points='''
         [console_scripts]
-        iotbot=iotbot.cli:cli
+        iotbot=iotbot._cli:cli
     ''',
     classifiers=[
         'Programming Language :: Python :: 3.6',

@@ -113,7 +113,7 @@ class IOTBOT:
         self.socketio.event()(self.connect)
 
     ########################################################################
-    # 处理信息接收函数
+    # message(context) receivers
     ########################################################################
     def refresh_plugins(self)->bool:
         '''刷新插件'''
@@ -204,6 +204,7 @@ class IOTBOT:
             self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
 
     def __group_context_distributor(self, context: GroupMsg):
+        time.sleep(0.5) # 群消息使用较多，这里设置一个延时尽量减小请求频繁错误
         for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
             self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
 
