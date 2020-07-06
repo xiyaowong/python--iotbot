@@ -4,6 +4,12 @@
 IOTBOT SDK with python
 ```
 
+## Install
+
+```shell
+pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
+```
+
 ## Quick Start
 
 ```python
