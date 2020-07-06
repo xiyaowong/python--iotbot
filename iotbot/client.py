@@ -224,10 +224,10 @@ class IOTBOT:
     def __group_context_distributor(self, context: GroupMsg):
         # 限制频率相关
         if context.FromUserId != context.CurrentQQ:
-            if len(self.__group_msg_dict[context.FromGroupId]) > 6:
+            if len(self.__group_msg_dict[context.FromGroupId]) > 8:
                 time.sleep(random.uniform(.6, 1.2))
                 # print('延时长点')
-            elif len(self.__group_msg_dict[context.FromGroupId]) > 3:
+            elif len(self.__group_msg_dict[context.FromGroupId]) > 4:
                 time.sleep(.3)
                 # print('延时短点')
             self.__group_msg_dict[context.FromGroupId].append(0)

@@ -11,17 +11,17 @@ from .model import FriendMsg, GroupMsg
 
 def Text(ctx: Union[GroupMsg, FriendMsg],
          text: str,
-         at: int = None):
+         at=False):
     """发送文字
     :param ctx:
     :param text: 文字内容
-    :param at:群聊可给定@用户qq号
+    :param at:是否艾特发送该消息的用户
     """
     if isinstance(ctx, GroupMsg):
         return Action(ctx.CurrentQQ).send_group_text_msg(
             ctx.FromGroupId,
             content=text,
-            atUser=at or 0
+            atUser=ctx.FromUserId if at else 0
         )
     ##################################################
     elif isinstance(ctx, FriendMsg):
