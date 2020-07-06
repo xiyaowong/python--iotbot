@@ -66,3 +66,18 @@ action = Action(123456)
 | all_shut_up_on         | 开启全员禁言                                      |
 | all_shut_up_off        | 关闭全员禁言                                      |
 | you_shut_up            | 群成员禁言                                        |
+
+## sugar
+在action的基础上深度封装了常用操作
+```
+from iotbot.sugar import Text, Picture
+
+Text(ctx, 'Hello') # 对该消息的来源(群或好友),发送内容为Hello的文字消息
+Picture(ctx, pic_url='') # 同上，这里是发送图片消息
+...
+具体参数看代码提示即可
+
+第一个参数为消息上下文，也就是函数的唯一一个参数, 具体发送给谁，该函数会自行判断
+
+以后若有添加，不会在写在这里，更新后留意代码补全列表即可
+```

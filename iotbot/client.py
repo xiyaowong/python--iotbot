@@ -198,6 +198,7 @@ class IOTBOT:
             *self.__group_msg_receivers_from_hand,
             *self.__event_receivers_from_plugin,
             *self.__event_receivers_from_hand,
+            *range(3)
         ]) * 2))
 
     # 手动添加
@@ -222,16 +223,17 @@ class IOTBOT:
 
     def __group_context_distributor(self, context: GroupMsg):
         # 限制频率相关
-        if len(self.__group_msg_dict[context.FromGroupId]) > 5:
-            time.sleep(random.uniform(.6, 1.2))
-            # print('延时长点')
-        elif len(self.__group_msg_dict[context.FromGroupId]) > 3:
-            time.sleep(.3)
-            # print('延时短点')
-        self.__group_msg_dict[context.FromGroupId].append(0)
-        # print('------------')
-        # print(self.__group_msg_dict)
-        # print('------------')
+        if context.FromUserId != context.CurrentQQ:
+            if len(self.__group_msg_dict[context.FromGroupId]) > 6:
+                time.sleep(random.uniform(.6, 1.2))
+                # print('延时长点')
+            elif len(self.__group_msg_dict[context.FromGroupId]) > 3:
+                time.sleep(.3)
+                # print('延时短点')
+            self.__group_msg_dict[context.FromGroupId].append(0)
+            # print('------------')
+            # print(self.__group_msg_dict)
+            # print('------------')
         ###########################################
         for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
             self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
