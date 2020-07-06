@@ -2,11 +2,15 @@
 import importlib
 import logging
 import os
+import random
 import sys
 import time
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable
+from threading import Thread
+from typing import Any, Callable
 
+import schedule
 import socketio
 from prettytable import PrettyTable
 
@@ -62,13 +66,18 @@ class IOTBOT:
         if not log:
             logging.disable()
 
+        # 手动
         self.__friend_msg_receivers_from_hand = []
         self.__group_msg_receivers_from_hand = []
         self.__event_receivers_from_hand = []
 
+        # 插件
         self.__friend_msg_receivers_from_plugin = []
         self.__group_msg_receivers_from_plugin = []
         self.__event_receivers_from_plugin = []
+
+        # 控制频率
+        self.__group_msg_dict = defaultdict(list)
 
         if use_plugins:
             self.refresh_plugins()
@@ -78,13 +87,21 @@ class IOTBOT:
         self.__initialize_handlers()
 
     def run(self):
+        self.__initialize_schedulers()
+        self.__run_schedule()
+
+        self.logger.info('Connecting to the server...')
+
         try:
-            self.logger.info('Connecting to the server...')
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
-            self.socketio.wait()
         except Exception as e:
             self.logger.error(f'启动失败 -> {e}')
             sys.exit(1)
+        else:
+            try:
+                self.socketio.wait()
+            except KeyboardInterrupt:
+                sys.exit(0)
 
     def connect(self):
         self.logger.info('Connected to server successfully!')
@@ -115,7 +132,7 @@ class IOTBOT:
     ########################################################################
     # message(context) receivers
     ########################################################################
-    def refresh_plugins(self)->bool:
+    def refresh_plugins(self) -> bool:
         '''刷新插件'''
         if not self.use_plugins:
             self.logger.info('未开启插件功能!')
@@ -123,6 +140,10 @@ class IOTBOT:
         try:
             plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir)
                             if i.startswith('bot_') and i.endswith('.py')]
+        except FileNotFoundError:
+            self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
+            return False
+        else:
             # 将原始清空，防止重复添加，这里用集合不能解决问题
             for i in [self.__group_msg_receivers_from_plugin,
                       self.__friend_msg_receivers_from_plugin,
@@ -167,32 +188,28 @@ class IOTBOT:
             ###############################################
             self.__refresh_executor()
             return True
-        except FileNotFoundError:
-            self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
-            return False
 
     def __refresh_executor(self):
-        # 根据函数处理数量初始化线程池
-        self.__executor = ThreadPoolExecutor(max_workers=min(200, len([
+        # 根据消息接收函数数量初始化线程池
+        self.__executor = ThreadPoolExecutor(max_workers=min(50, len([  # 减小数量，控制消息频率
             *self.__friend_msg_receivers_from_plugin,
             *self.__friend_msg_receivers_from_hand,
             *self.__group_msg_receivers_from_plugin,
             *self.__group_msg_receivers_from_hand,
             *self.__event_receivers_from_plugin,
             *self.__event_receivers_from_hand,
-            *range(10)
-        ]) * 3))  # 添加10*3个占位
+        ]) * 2))
 
     # 手动添加
-    def add_group_msg_receiver(self, func: Callable):
+    def add_group_msg_receiver(self, func: Callable[[GroupMsg], Any]):
         '''群消息处理'''
         self.__group_msg_receivers_from_hand.append(func)
 
-    def add_friend_msg_receiver(self, func: Callable):
+    def add_friend_msg_receiver(self, func: Callable[[FriendMsg], Any]):
         '''好友消息'''
         self.__friend_msg_receivers_from_hand.append(func)
 
-    def add_event_receiver(self, func: Callable):
+    def add_event_receiver(self, func: Callable[[dict], Any]):
         '''事件'''
         self.__event_receivers_from_hand.append(func)
 
@@ -204,7 +221,18 @@ class IOTBOT:
             self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
 
     def __group_context_distributor(self, context: GroupMsg):
-        time.sleep(0.5) # 群消息使用较多，这里设置一个延时尽量减小请求频繁错误
+        # 限制频率相关
+        if len(self.__group_msg_dict[context.FromGroupId]) > 5:
+            time.sleep(random.uniform(.6, 1.2))
+            # print('延时长点')
+        elif len(self.__group_msg_dict[context.FromGroupId]) > 3:
+            time.sleep(.3)
+            # print('延时短点')
+        self.__group_msg_dict[context.FromGroupId].append(0)
+        # print('------------')
+        # print(self.__group_msg_dict)
+        # print('------------')
+        ###########################################
         for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
             self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
 
@@ -240,7 +268,26 @@ class IOTBOT:
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
         self.socketio.on('OnEvents')(self.__event_msg_handler)
+
     ########################################################################
+    # 定时任务相关
+    ########################################################################
+    def __initialize_schedulers(self):
+        schedule.every(60).seconds.do(self.__clear_msg_dict)
+
+    def __clear_msg_dict(self):
+        # print('----------clear group msg dict------------')
+        # print(self.__group_msg_dict)
+        self.__group_msg_dict.clear()
+
+    def __run_schedule_do_not_call(self):
+        while True:
+            schedule.run_pending()
+
+    def __run_schedule(self):
+        schedule_thread = Thread(target=self.__run_schedule_do_not_call)
+        schedule_thread.start()
+        ########################################################################
 
     on_group_msg = _deco_creater('OnGroupMsgs')
     on_friend_msg = _deco_creater('OnFriendMsgs')
