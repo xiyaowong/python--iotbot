@@ -318,6 +318,8 @@ class Action:
         :param api_path: 默认为/v1/LuaApiCaller
         :param iot_timeout: IOT端处理请求等待的时间
         :param bot_qq: 机器人QQ
+
+        :return: iotbot端返回的json数据(字典)，如果返回内容非json则返回空字典
         """
 
         params = {
@@ -338,7 +340,10 @@ class Action:
             )
             rep.raise_for_status()
             if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
-                self.logger.error(f'请求发送成功, 但处理失败: {rep.json()}')
+                if rep.json()['Ret'] == 241:
+                    self.logger.error(f'请求频繁: {rep.json()}')
+                else:
+                    self.logger.error(f'请求发送成功, 但处理失败: {rep.json()}')
             return rep.json()
         except Exception as e:
             if isinstance(e, Timeout):
