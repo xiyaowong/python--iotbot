@@ -22,10 +22,10 @@ def get_msg():
 
 
 @equal_content('早')
-def receive_group_msg(ctx):
-    Text(ctx, get_msg())
+def receive_group_msg(_):
+    Text(get_msg())
 
 
 @equal_content('早')
-def receive_friend_msg(ctx):
-    Text(ctx, get_msg())
+def receive_friend_msg(_):
+    Text(get_msg())

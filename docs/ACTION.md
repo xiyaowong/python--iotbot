@@ -69,15 +69,18 @@ action = Action(123456)
 
 ## sugar
 在action的基础上深度封装了常用操作
-```
-from iotbot.sugar import Text, Picture
+```python
+from iotbot.sugar import Text, Picture, Voice
 
-Text(ctx, 'Hello') # 对该消息的来源(群或好友),发送内容为Hello的文字消息
-Picture(ctx, pic_url='') # 同上，这里是发送图片消息
+Text('Hello') # 对该消息的来源(群或好友),发送内容为Hello的文字消息
+Picture(pic_url='') # 同上，这里是发送图片消息
+Voice(...)
 ...
+```
 具体参数看代码提示即可
 
-第一个参数为消息上下文，也就是函数的唯一一个参数, 具体发送给谁，该函数会自行判断
+这几个函数**只能**在群消息和好友消息接收函数中使用
+
+同时必须保证iotbot端的配置均为默认配置，即端口号为8888
 
 以后若有添加，不会在写在这里，更新后留意代码补全列表即可
-```
