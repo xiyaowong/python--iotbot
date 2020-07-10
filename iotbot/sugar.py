@@ -28,6 +28,7 @@ def Text(text: str,
         for v in upper_locals.values():
             if type(v) in [GroupMsg, FriendMsg]:
                 ctx = v
+                break
     ###################################################
     if isinstance(ctx, GroupMsg):
         return Action(ctx.CurrentQQ).send_group_text_msg(
@@ -69,6 +70,7 @@ def Picture(pic_url='',
         for v in upper_locals.values():
             if type(v) in [GroupMsg, FriendMsg]:
                 ctx = v
+                break
     ##################################################
     if isinstance(ctx, GroupMsg):
         if pic_url:
@@ -138,6 +140,7 @@ def Voice(voice_url='',
         for v in upper_locals.values():
             if type(v) in [GroupMsg, FriendMsg]:
                 ctx = v
+                break
     ##################################################
     if isinstance(ctx, GroupMsg):
         if voice_url:
