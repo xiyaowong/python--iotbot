@@ -77,6 +77,7 @@ action = Action(123456)
 
 1. 开启队列后方法都没有返回值，所以只适合执行发送任务
 2. Action 必须定义为**全局变量**，不能放在接收函数内
+参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
 
 ## sugar
 
