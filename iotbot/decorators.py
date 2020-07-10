@@ -1,3 +1,4 @@
+import functools
 import re
 
 from .model import FriendMsg, GroupMsg
@@ -30,6 +31,19 @@ def equal_content(string: str):
             return None
         return inner
     return deco
+
+
+def not_botself(func=None):
+    """忽略机器人自身的消息"""
+    if func is None:
+        return functools.partial(not_botself)
+
+    def inner(ctx):
+        if type(ctx) in [GroupMsg, FriendMsg]:
+            if ctx.FromUserId != ctx.CurrentQQ:
+                return func(ctx)
+        return None
+    return inner
 
 
 def not_these_users(users: list):
