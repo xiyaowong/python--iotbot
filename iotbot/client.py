@@ -10,7 +10,6 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from typing import Any, Callable
 
-import schedule
 import socketio
 from prettytable import PrettyTable
 
@@ -76,9 +75,6 @@ class IOTBOT:
         self.__group_msg_receivers_from_plugin = []
         self.__event_receivers_from_plugin = []
 
-        # 控制频率
-        self.__group_msg_dict = defaultdict(list)
-
         if use_plugins:
             self.refresh_plugins()
 
@@ -87,9 +83,6 @@ class IOTBOT:
         self.__initialize_handlers()
 
     def run(self):
-        self.__initialize_schedulers()
-        self.__run_schedule()
-
         self.logger.info('Connecting to the server...')
 
         try:
@@ -222,19 +215,6 @@ class IOTBOT:
             self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
 
     def __group_context_distributor(self, context: GroupMsg):
-        # 限制频率相关
-        if context.FromUserId != context.CurrentQQ:
-            if len(self.__group_msg_dict[context.FromGroupId]) > 8:
-                time.sleep(random.uniform(.6, 1.2))
-                # print('延时长点')
-            elif len(self.__group_msg_dict[context.FromGroupId]) > 4:
-                time.sleep(.3)
-                # print('延时短点')
-            self.__group_msg_dict[context.FromGroupId].append(0)
-            # print('------------')
-            # print(self.__group_msg_dict)
-            # print('------------')
-        ###########################################
         for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
             self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
 
@@ -270,25 +250,6 @@ class IOTBOT:
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
         self.socketio.on('OnEvents')(self.__event_msg_handler)
-
-    ########################################################################
-    # 定时任务相关
-    ########################################################################
-    def __initialize_schedulers(self):
-        schedule.every(60).seconds.do(self.__clear_msg_dict)
-
-    def __clear_msg_dict(self):
-        # print('----------clear group msg dict------------')
-        # print(self.__group_msg_dict)
-        self.__group_msg_dict.clear()
-
-    def __run_schedule_do_not_call(self):
-        while True:
-            schedule.run_pending()
-
-    def __run_schedule(self):
-        schedule_thread = Thread(target=self.__run_schedule_do_not_call)
-        schedule_thread.start()
         ########################################################################
 
     on_group_msg = _deco_creater('OnGroupMsgs')

@@ -1,10 +1,18 @@
 """一些常用的方法
 
-其中对于发送语音，图片的方法，建议将timeout设置很短，因为暂时发现这类请求因为需要文件上传操作，
+Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一点，开启队列方法都没有返回值，
+    所以对于获取信息的api，千万不能用这个模式
+
+对于发送语音，图片的方法，建议将timeout设置很短，因为暂时发现这类请求因为需要文件上传操作，
 响应时间会较长，而且目前来看，如果文件较大导致上传时间太长，IOTBOT端会报错, IOTBOT响应的结果一定是错误的,
 不过发送去的操作是能正常完成的。
 """
+import functools
 import json
+import time
+from queue import Queue
+from threading import Thread
+from typing import Callable
 
 import requests
 from requests.exceptions import Timeout
@@ -16,6 +24,9 @@ from .logger import Logger
 class Action:
     '''
     :param qq_or_bot: qq号或者机器人实例(`IOTBOT`)
+    :param queue: 是否开启队列，开启后任务将按顺序发送并延时指定时间，此参数与`queue_delay`对应
+                  启用后，发送方法`没有返回值`
+    :param queue_delay: 开启队列时发送每条消息间的延时, 保持默认即可
     :param timeout: 等待IOTBOT响应时间，不是发送请求的延时
     :param log_file_path: 日志文件路径
     :param api_path: 方法路径
@@ -25,7 +36,9 @@ class Action:
 
     def __init__(self,
                  qq_or_bot=None,
-                 timeout=10,
+                 queue=False,
+                 queue_delay=1.1,
+                 timeout=15,
                  log_file_path=None,
                  api_path='/v1/LuaApiCaller',
                  port=8888,
@@ -40,11 +53,42 @@ class Action:
             self.qq = int(qq_or_bot)
         self.logger = Logger(log_file_path)
 
+        if queue:
+            self.__use_queue = True
+            self.__queue_delay = queue_delay
+            self.__send_queue = Queue(maxsize=1000)
+            self.__last_send_time = time.time()
+            # 开启发送队列线程
+            t = Thread(target=self.__send_thread)
+            t.start()
+        else:
+            self.__use_queue = False
+
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
         self.qq = bot.qq
         self.__port = bot.port
         self.__host = bot.host
+
+    def __send_thread(self):
+        """
+        发送队列线程
+        负责执行队列的任务，并判断是否应该立即执行
+        """
+        while True:
+            job = self.__send_queue.get()  # type: Callable
+            left_time = self.__queue_delay - (time.time() - self.__last_send_time)
+            if left_time > 0:
+                # print(f'还没到发送时间...,请等待{left_time}s')
+                time.sleep(left_time)
+            try:
+                # print('即将发送....')
+                job()
+            except Exception as e:
+                print(f'出错了，我帮你处理了 -> {e}')
+            finally:
+                self.__last_send_time = time.time()
+                # print(f'上次运行时间：{self.__last_send_time}')
 
     def send_friend_text_msg(self, toUser: int, content: str, timeout=5, **kwargs) -> dict:
         """发送好友文本消息"""
@@ -321,7 +365,32 @@ class Action:
 
         :return: iotbot端返回的json数据(字典)，如果返回内容非json则返回空字典
         """
+        job = functools.partial(
+            self._baseSender,
+            method=method,
+            funcname=funcname,
+            data=data,
+            timeout=timeout,
+            api_path=api_path,
+            iot_timeout=iot_timeout,
+            bot_qq=bot_qq
+        )
+        functools.update_wrapper(job, self.baseSender)
+        if self.__use_queue:
+            self.__send_queue.put(job)
+            # print('加入队列...')
+            return None
+        # print('不加入队列...')
+        return job()
 
+    def _baseSender(self,
+                    method: str,
+                    funcname: str,
+                    data: dict = None,
+                    timeout: int = None,
+                    api_path: str = None,
+                    iot_timeout: int = None,
+                    bot_qq: int = None) -> dict:
         params = {
             'funcname': funcname,
             'timeout': iot_timeout or self.__timeout,
