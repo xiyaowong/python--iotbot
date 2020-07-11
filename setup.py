@@ -33,7 +33,6 @@ setup(
     install_requires=[
         'python-socketio >= 4.5.1', 'websocket-client >= 0.57.0',
         'requests >= 2.23.0', 'colorama >= 0.4.3', 'prettytable >= 0.7.2',
-        'schedule >= 0.6.0'
     ],
     entry_points='''
         [console_scripts]
