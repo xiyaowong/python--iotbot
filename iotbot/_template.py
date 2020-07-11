@@ -1,4 +1,4 @@
-from iotbot import IOTBOT, Action, FriendMsg, GroupMsg
+from iotbot import IOTBOT, ActEventMsg, EventMsg, FriendMsg, GroupMsg
 
 bot_qq = 11
 bot = IOTBOT(bot_qq, use_plugins=False)
@@ -22,9 +22,9 @@ def on_friend_msg(ctx: FriendMsg):
 
 
 @bot.on_event
-def on_event(message: dict):
-    # 事件暂时未处理message，需要手动操作
-    print(message)
+def on_event(ctx: EventMsg):
+    print(ctx.message)
+    print(ctx.EventName)
 
 
 def test_group(ctx: GroupMsg):

@@ -2,19 +2,16 @@
 import importlib
 import logging
 import os
-import random
 import sys
 import time
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from threading import Thread
 from typing import Any, Callable
 
 import socketio
 from prettytable import PrettyTable
 
 from .logger import Logger
-from .model import FriendMsg, GroupMsg, model_map
+from .model import EventMsg, FriendMsg, GroupMsg, model_map
 
 
 def _deco_creater(bind_type):
@@ -74,6 +71,11 @@ class IOTBOT:
         self.__friend_msg_receivers_from_plugin = []
         self.__group_msg_receivers_from_plugin = []
         self.__event_receivers_from_plugin = []
+
+        # 消息上下文对象中间件
+        self.__friend_context_middleware: Callable[[FriendMsg], 'NewContext'] = None
+        self.__group_context_middleware: Callable[[GroupMsg], 'NewContext'] = None
+        self.__event_context_middleware: Callable[[EventMsg], 'NewContext'] = None
 
         if use_plugins:
             self.refresh_plugins()
@@ -196,31 +198,61 @@ class IOTBOT:
 
     # 手动添加
     def add_group_msg_receiver(self, func: Callable[[GroupMsg], Any]):
-        '''群消息处理'''
+        '''添加群消息接收函数'''
         self.__group_msg_receivers_from_hand.append(func)
 
     def add_friend_msg_receiver(self, func: Callable[[FriendMsg], Any]):
-        '''好友消息'''
+        '''添加好友消息接收函数'''
         self.__friend_msg_receivers_from_hand.append(func)
 
-    def add_event_receiver(self, func: Callable[[dict], Any]):
-        '''事件'''
+    def add_event_receiver(self, func: Callable[[EventMsg], Any]):
+        '''添加事件消息接收函数'''
         self.__event_receivers_from_hand.append(func)
 
     ########################################################################
     # context distributor
     ########################################################################
     def __friend_context_distributor(self, context: FriendMsg):
-        for f_receiver in [*self.__friend_msg_receivers_from_hand, *self.__friend_msg_receivers_from_plugin]:
-            self.__executor.submit(f_receiver, context).add_done_callback(self.__thread_pool_callback)
+        for f_receiver in [*self.__friend_msg_receivers_from_hand,
+                           *self.__friend_msg_receivers_from_plugin]:
+            (self.__executor
+             .submit(f_receiver, context)
+             .add_done_callback(self.__thread_pool_callback))
 
     def __group_context_distributor(self, context: GroupMsg):
-        for g_receiver in [*self.__group_msg_receivers_from_hand, *self.__group_msg_receivers_from_plugin]:
-            self.__executor.submit(g_receiver, context).add_done_callback(self.__thread_pool_callback)
+        for g_receiver in [*self.__group_msg_receivers_from_hand,
+                           *self.__group_msg_receivers_from_plugin]:
+            (self.__executor
+             .submit(g_receiver, context)
+             .add_done_callback(self.__thread_pool_callback))
 
-    def __event_context_distributor(self, context):
-        for e_receiver in [*self.__event_receivers_from_hand, *self.__event_receivers_from_plugin]:
-            self.__executor.submit(e_receiver, context).add_done_callback(self.__thread_pool_callback)
+    def __event_context_distributor(self, context: EventMsg):
+        for e_receiver in [*self.__event_receivers_from_hand,
+                           *self.__event_receivers_from_plugin]:
+            (self.__executor
+             .submit(e_receiver, context)
+             .add_done_callback(self.__thread_pool_callback))
+
+    ########################################################################
+    # register context middleware
+    ########################################################################
+    def register_friend_context_middleware(self, middleware: Callable[[FriendMsg], 'NewContext']):
+        """注册好友消息中间件"""
+        if self.__friend_context_middleware is not None:
+            raise Exception('Cannot register more than one middleware(friend)')
+        self.__friend_context_middleware = middleware
+
+    def register_group_context_middleware(self, middleware: Callable[[GroupMsg], 'NewContext']):
+        """注册群消息中间件"""
+        if self.__group_context_middleware is not None:
+            raise Exception('Cannot register more than one middleware(group)')
+        self.__group_context_middleware = middleware
+
+    def register_event_context_middleware(self, middleware: Callable[[EventMsg], 'NewContext']):
+        """注册事件消息中间件"""
+        if self.__event_context_middleware is not None:
+            raise Exception('Cannot register more than one middleware(event)')
+        self.__event_context_middleware = middleware
 
     ########################################################################
     # message handler
@@ -232,25 +264,37 @@ class IOTBOT:
 
     def __friend_msg_handler(self, msg):
         context = model_map['OnFriendMsgs'](msg)  # type:FriendMsg
+        # 白名单
         if self.friend_whitelist:
             if context.FromUin not in self.friend_whitelist:
                 return
+        # 中间件
+        if self.__friend_context_middleware is not None:
+            context = self.__friend_context_middleware(context)
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
         context = model_map['OnGroupMsgs'](msg)  # type:GroupMsg
+        # 黑名单
         if context.FromGroupId in self.group_blacklist:
             return
+        # 中间件
+        if self.__group_context_middleware is not None:
+            context = self.__group_context_middleware(context)
         self.__executor.submit(self.__group_context_distributor, context)
 
     def __event_msg_handler(self, msg):
-        self.__executor.submit(self.__event_context_distributor, msg)
+        context = model_map['OnEvents'](msg)  # type: EventMsg
+        # 中间件
+        if self.__event_context_middleware is not None:
+            context = self.__event_context_middleware(context)
+        self.__executor.submit(self.__event_context_distributor, context)
 
     def __initialize_handlers(self):
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
         self.socketio.on('OnEvents')(self.__event_msg_handler)
-        ########################################################################
+    ###########################################################################
 
     on_group_msg = _deco_creater('OnGroupMsgs')
     on_friend_msg = _deco_creater('OnFriendMsgs')

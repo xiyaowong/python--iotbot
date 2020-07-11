@@ -1,7 +1,12 @@
-from iotbot import Action
+from iotbot import Action, EventMsg
 
 
-def receive_events(ctx: dict):
+def receive_events(ctx: EventMsg):
+    # 这样写是因为第一次整这个插件时事件上下文还是字典，
+    # 这里我因为懒得改了，所以这样写
+    # 用对象的字段会方便和简洁一点，自己修改吧
+    ctx = ctx.message    #
+    ######################
     action = Action(ctx['CurrentQQ'])
     data = ctx['CurrentPacket']['Data']
 

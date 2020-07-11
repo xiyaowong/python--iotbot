@@ -17,7 +17,7 @@ def cli():
         file = f'bot_{plug_name}.py'
         if input(f'将生成{file}，这是覆盖写操作，确定？ y/N ').lower() == 'y':
             with open(file, 'w', encoding='utf-8') as f:
-                f.write("""from iotbot import Action, FriendMsg, GroupMsg
+                f.write("""from iotbot import Action, FriendMsg, GroupMsg, EventMsg
 
 
 # 下面三个函数名不能改，否则不会调用
@@ -29,7 +29,7 @@ def receive_group_msg(ctx: GroupMsg):
 def receive_friend_msg(ctx: FriendMsg):
     Action(ctx.CurrentQQ)
 
-def receive_events(ctx: dict):
+def receive_events(ctx: EventMsg):
     Action(ctx.CurrentQQ)
     """)
             print('OK!')

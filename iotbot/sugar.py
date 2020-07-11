@@ -16,6 +16,7 @@ def Text(text: str,
     :param text: 文字内容
     :param at:是否艾特发送该消息的用户
     """
+    text = str(text)
     # 查找消息上下文 `ctx`变量
     ctx = None
     f = sys._getframe()

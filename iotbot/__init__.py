@@ -1,6 +1,6 @@
 """Author: wongxy github.com/xiyaowong
 
-from iotbot import IOTBOT, GroupMsg, FriendMsg
+from iotbot import IOTBOT, GroupMsg, FriendMsg, EventMsg
 
 bot = IOTBOT(your_bot_qq)
 
@@ -13,10 +13,10 @@ def friend(ctx: FriendMsg):
     pass
 
 @bot.on_event
-def event(message: dict):
+def event(message: EventMsg):
     pass
 """
 
-from .client import IOTBOT
-from .model import FriendMsg, GroupMsg, model_map
 from .action import Action
+from .client import IOTBOT
+from .model import EventMsg, FriendMsg, GroupMsg, model_map

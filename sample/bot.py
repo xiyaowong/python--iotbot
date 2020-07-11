@@ -20,6 +20,15 @@ for i in range(big_mouth_len):
     big_mouth_deque.append(i)  # 初始化
 
 
+# 群消息中间件使用示例
+def group_ctx_middleware(ctx):
+    ctx.master = 12345678
+
+
+bot.register_group_context_middleware(group_ctx_middleware)
+############
+
+
 @bot.on_group_msg
 def on_group_msg(ctx: GroupMsg):
     # 不处理自身消息
