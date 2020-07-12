@@ -9,6 +9,7 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 """
 import functools
 import json
+import os
 import time
 from queue import Queue
 from threading import Thread
@@ -45,8 +46,8 @@ class Action:
                  host='http://127.0.0.1'):
         self.__timeout = timeout
         self.__api_path = api_path
-        self.__port = port
-        self.__host = host
+        self.__port = int(os.getenv('IOTBOT_PORT') or port)
+        self.__host = os.getenv('IOTBOT_HOST') or host
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:

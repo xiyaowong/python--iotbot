@@ -17,6 +17,17 @@ def event(message: EventMsg):
     pass
 """
 
+try:
+    from dotenv import load_dotenv as __load_dotenv
+except ImportError:
+    pass
+else:
+    __load_dotenv()
+
+
 from .action import Action
 from .client import IOTBOT
-from .model import EventMsg, FriendMsg, GroupMsg, model_map
+from .model import EventMsg
+from .model import FriendMsg
+from .model import GroupMsg
+from .model import model_map

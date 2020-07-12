@@ -7,12 +7,20 @@ import base64
 import sys
 
 from .action import Action
-from .model import FriendMsg, GroupMsg
+from .model import FriendMsg
+from .model import GroupMsg
+from .refine_message import _AtGroupMsg
+from .refine_message import _PicFriendMsg
+from .refine_message import _PicGroupMsg
+from .refine_message import _RedBagFriendMsg
+from .refine_message import _RedBagGroupMsg
+from .refine_message import _VoiceFriendMsg
+from .refine_message import _VoiceGroupMsg
 
 
 def Text(text: str,
          at=False):
-    """发送文字
+    """发送文字 经支持群消息和好友消息接收函数内调用
     :param text: 文字内容
     :param at:是否艾特发送该消息的用户
     """
@@ -23,7 +31,17 @@ def Text(text: str,
     upper = f.f_back
     upper_locals = upper.f_locals
     if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [GroupMsg, FriendMsg]):
+            type(upper_locals['ctx']) in [
+                GroupMsg,
+                FriendMsg,
+                _AtGroupMsg,
+                _PicFriendMsg,
+                _PicGroupMsg,
+                _RedBagFriendMsg,
+                _RedBagGroupMsg,
+                _VoiceFriendMsg,
+                _VoiceGroupMsg
+            ]):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
@@ -31,14 +49,25 @@ def Text(text: str,
                 ctx = v
                 break
     ###################################################
-    if isinstance(ctx, GroupMsg):
+    if type(ctx) in [
+        GroupMsg,
+        _AtGroupMsg,
+        _PicGroupMsg,
+        _RedBagGroupMsg,
+        _VoiceGroupMsg
+    ]:
         return Action(ctx.CurrentQQ).send_group_text_msg(
             ctx.FromGroupId,
             content=text,
             atUser=ctx.FromUserId if at else 0
         )
     ##################################################
-    elif isinstance(ctx, FriendMsg):
+    elif type(ctx) in [
+        FriendMsg,
+        _PicFriendMsg,
+        _RedBagFriendMsg,
+        _VoiceFriendMsg,
+    ]:
         return Action(ctx.CurrentQQ).send_friend_text_msg(
             ctx.FromUin,
             text
@@ -50,7 +79,7 @@ def Text(text: str,
 def Picture(pic_url='',
             pic_base64='',
             pic_path=''):
-    """发送图片
+    """发送图片 经支持群消息和好友消息接收函数内调用
     :param pic_url: 图片链接
     :param pic_base64: 图片base64编码
     :param pic_path: 图片文件路径
@@ -65,7 +94,17 @@ def Picture(pic_url='',
     upper = f.f_back
     upper_locals = upper.f_locals
     if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [GroupMsg, FriendMsg]):
+            type(upper_locals['ctx']) in [
+                GroupMsg,
+                FriendMsg,
+                _AtGroupMsg,
+                _PicFriendMsg,
+                _PicGroupMsg,
+                _RedBagFriendMsg,
+                _RedBagGroupMsg,
+                _VoiceFriendMsg,
+                _VoiceGroupMsg
+            ]):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
@@ -73,7 +112,13 @@ def Picture(pic_url='',
                 ctx = v
                 break
     ##################################################
-    if isinstance(ctx, GroupMsg):
+    if type(ctx) in [
+        GroupMsg,
+        _AtGroupMsg,
+        _PicGroupMsg,
+        _RedBagGroupMsg,
+        _VoiceGroupMsg
+    ]:
         if pic_url:
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
@@ -94,7 +139,12 @@ def Picture(pic_url='',
             )
         return None
     ##################################################
-    elif isinstance(ctx, FriendMsg):
+    elif type(ctx) in [
+        FriendMsg,
+        _PicFriendMsg,
+        _RedBagFriendMsg,
+        _VoiceFriendMsg,
+    ]:
         if pic_url:
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
@@ -121,7 +171,7 @@ def Picture(pic_url='',
 def Voice(voice_url='',
           voice_base64='',
           voice_path=''):
-    """发送语音
+    """发送语音 经支持群消息和好友消息接收函数内调用
     :param voice_url: 语音链接
     :param voice_base64: 语音base64编码
     :param voice_path: 语音文件路径
@@ -135,7 +185,17 @@ def Voice(voice_url='',
     upper = f.f_back
     upper_locals = upper.f_locals
     if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [GroupMsg, FriendMsg]):
+            type(upper_locals['ctx']) in [
+                GroupMsg,
+                FriendMsg,
+                _AtGroupMsg,
+                _PicFriendMsg,
+                _PicGroupMsg,
+                _RedBagFriendMsg,
+                _RedBagGroupMsg,
+                _VoiceFriendMsg,
+                _VoiceGroupMsg
+            ]):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
@@ -143,7 +203,13 @@ def Voice(voice_url='',
                 ctx = v
                 break
     ##################################################
-    if isinstance(ctx, GroupMsg):
+    if type(ctx) in [
+        GroupMsg,
+        _AtGroupMsg,
+        _PicGroupMsg,
+        _RedBagGroupMsg,
+        _VoiceGroupMsg
+    ]:
         if voice_url:
             return Action(ctx.CurrentQQ).send_group_voice_msg(
                 ctx.FromGroupId,
@@ -164,7 +230,12 @@ def Voice(voice_url='',
             )
         return None
     ##################################################
-    elif isinstance(ctx, FriendMsg):
+    elif type(ctx) in [
+        FriendMsg,
+        _PicFriendMsg,
+        _RedBagFriendMsg,
+        _VoiceFriendMsg,
+    ]:
         if voice_url:
             return Action(ctx.CurrentQQ).send_friend_voice_msg(
                 ctx.FromUin,

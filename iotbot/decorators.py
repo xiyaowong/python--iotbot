@@ -1,7 +1,8 @@
 import functools
 import re
 
-from .model import FriendMsg, GroupMsg
+from .model import FriendMsg
+from .model import GroupMsg
 
 
 def in_content(string: str):
@@ -40,7 +41,11 @@ def not_botself(func=None):
 
     def inner(ctx):
         if type(ctx) in [GroupMsg, FriendMsg]:
-            if ctx.FromUserId != ctx.CurrentQQ:
+            if isinstance(ctx, GroupMsg):
+                userid = ctx.FromUserId
+            else:
+                userid = ctx.FromUin
+            if userid != ctx.CurrentQQ:
                 return func(ctx)
         return None
     return inner

@@ -1,48 +1,25 @@
 # pylint: disable=too-many-instance-attributes
+"""消息模型，仅提取固定的字段"""
+
+
 class GroupMsg:
     def __init__(self, message: dict):
         self.message: dict = message
         self.CurrentQQ: int = message.get('CurrentQQ')
 
-        # ========================================
-        # 代码提示
-        self.FromGroupId = 0
-        self.FromGroupName = ''
-        self.FromUserId = 0
-        self.FromNickName = ''
-        self.Content = ''
-        self.MsgType = ''
-        self.MsgTime = 0
-        self.MsgSeq = 0
-        self.MsgRandom = 0
-        self.RedBaginfo = None
-        # ========================================
-
         temp = message.get('CurrentPacket')
-        data = temp.get('Data') if temp is not None else {}
+        self.data: dict = temp.get('Data') if temp is not None else {}
 
-        self.data = data
-
-        self.__init(data)
-
-    def __init(self, data):
-        for attr in ['FromGroupId',
-                     'FromGroupName',
-                     'FromUserId',
-                     'FromNickName',
-                     'Content',
-                     'MsgType',
-                     'MsgTime',
-                     'MsgSeq',
-                     'MsgRandom',
-                     'RedBaginfo']:
-            setattr(self, attr, data.get(attr))
-
-    def get(self, item):
-        return self.message.get(item)
-
-    def __getitem__(self, item):
-        return self.message.get(item)
+        self.FromGroupId: int = self.data.get('FromGroupId')
+        self.FromGroupName: str = self.data.get('FromGroupName')
+        self.FromUserId: int = self.data.get('FromUserId')
+        self.FromNickName: str = self.data.get('FromNickName')
+        self.Content: str = self.data.get('Content')
+        self.MsgType: str = self.data.get('MsgType')
+        self.MsgTime: int = self.data.get('MsgTime')
+        self.MsgSeq: int = self.data.get('MsgSeq')
+        self.MsgRandom: int = self.data.get('MsgRandom')
+        self.RedBaginfo: dict = self.data.get('RedBaginfo')
 
 
 class FriendMsg:
@@ -50,37 +27,15 @@ class FriendMsg:
         self.message: dict = message
         self.CurrentQQ: int = message.get('CurrentQQ')
 
-        # ========================================
-        # 代码提示
-        self.FromUin = 0
-        self.ToUin = 0
-        self.MsgType = ''
-        self.MsgSeq = 0
-        self.Content = ''
-        self.RedBaginfo = None
-        # ========================================
-
         temp = message.get('CurrentPacket')
-        data = temp.get('Data') if temp is not None else {}
+        self.data: dict = temp.get('Data') if temp is not None else {}
 
-        self.data = data
-
-        self.__init(data)
-
-    def __init(self, data):
-        for attr in ['FromUin',
-                     'ToUin',
-                     'MsgType',
-                     'MsgSeq',
-                     'Content',
-                     'RedBaginfo']:
-            setattr(self, attr, data.get(attr))
-
-    def get(self, item):
-        return self.message.get(item)
-
-    def __getitem__(self, item):
-        return self.message.get(item)
+        self.FromUin: int = self.data.get('FromUin')
+        self.ToUin: int = self.data.get('ToUin')
+        self.MsgType: str = self.data.get('MsgType')
+        self.MsgSeq: int = self.data.get('MsgSeq')
+        self.Content: str = self.data.get('Content')
+        self.RedBaginfo: dict = self.data.get('RedBaginfo')
 
 
 class EventMsg:
@@ -88,30 +43,23 @@ class EventMsg:
         self.message: dict = message
         self.CurrentQQ: int = message.get('CurrentQQ')
 
-        # ========================================
-        # 代码提示
-        self.EventName = ''
-        self.EventData: dict = None
-        self.EventMsg: dict = None
-        # ========================================
-
         temp = message.get('CurrentPacket')
-        data = temp.get('Data') if temp is not None else {}
+        self.data: dict = temp.get('Data') if temp is not None else {}
 
-        self.data = data
+        self.EventName: str = self.data.get('EventName')
+        self.EventData: dict = self.data.get('EventData')
+        self.EventMsg: dict = self.data.get('EventMsg')
 
-        self.__init(data)
-
-    def __init(self, data):
-        for attr in ['EventName',
-                     'EventData',
-                     'EventMsg']:
-            setattr(self, attr, data.get(attr))
+        self.Content: str = self.EventMsg.get('Content')
+        self.FromUin: int = self.EventMsg.get('FromUin')
+        self.MsgSeq: int = self.EventMsg.get('MsgSeq')
+        self.MsgType: str = self.EventMsg.get('MsgType')
+        self.ToUin: int = self.EventMsg.get('ToUin')
+        self.RedBaginfo = self.EventMsg.get('RedBaginfo')
 
 
 model_map = {
     'OnGroupMsgs': GroupMsg,
     'OnFriendMsgs': FriendMsg,
     'OnEvents': EventMsg
-
 }

@@ -1,4 +1,8 @@
-from iotbot import IOTBOT, ActEventMsg, EventMsg, FriendMsg, GroupMsg
+from iotbot import IOTBOT
+from iotbot import Action
+from iotbot import EventMsg
+from iotbot import FriendMsg
+from iotbot import GroupMsg
 
 bot_qq = 11
 bot = IOTBOT(bot_qq, use_plugins=False)

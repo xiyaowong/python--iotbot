@@ -5,13 +5,17 @@ import os
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Callable
+from typing import Any
+from typing import Callable
 
 import socketio
 from prettytable import PrettyTable
 
 from .logger import Logger
-from .model import EventMsg, FriendMsg, GroupMsg, model_map
+from .model import EventMsg
+from .model import FriendMsg
+from .model import GroupMsg
+from .model import model_map
 
 
 def _deco_creater(bind_type):
@@ -32,7 +36,7 @@ class IOTBOT:
     :param plugin_dir: 插件存放目录
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
     :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
-    :param log: 是否开启log
+    :param log: 是否开启日志
     :param log_file_path: 日志文件路径
     :param port: 运行端口
     :param beat_delay: 心跳延时时间（s）
@@ -46,7 +50,7 @@ class IOTBOT:
                  group_blacklist: list = None,
                  friend_whitelist: list = None,
                  log=True,
-                 log_file_path=None,
+                 log_file_path: str = None,
                  port=8888,
                  beat_delay=60,
                  host='http://127.0.0.1'):
@@ -55,8 +59,8 @@ class IOTBOT:
         self.plugin_dir = plugin_dir
         self.group_blacklist = group_blacklist or []
         self.friend_whitelist = friend_whitelist or []
-        self.host = host
-        self.port = port
+        self.host = os.getenv('IOTBOT_HOST') or host
+        self.port = int(os.getenv('IOTBOT_PORT') or port)
         self.beat_delay = beat_delay
         self.logger = Logger(log_file_path)
         if not log:
@@ -301,4 +305,4 @@ class IOTBOT:
     on_event = _deco_creater('OnEvents')
 
     def __repr__(self):
-        return f'IOTBOT <{self.qq}>'
+        return f'IOTBOT <{self.qq}> <host-{self.host}> <port-{self.port}>'

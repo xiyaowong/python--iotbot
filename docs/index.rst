@@ -20,3 +20,4 @@ Welcome to python-iotbot's documentation!
    SCAFFOLD
    OTHER
    SAMPLE
+   TIPS
