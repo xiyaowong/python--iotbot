@@ -21,6 +21,9 @@ class GroupMsg:
         self.MsgRandom: int = self.data.get('MsgRandom')
         self.RedBaginfo: dict = self.data.get('RedBaginfo')
 
+    def __getitem__(self, key):
+        return self.message[key]
+
 
 class FriendMsg:
     def __init__(self, message: dict):
@@ -36,6 +39,9 @@ class FriendMsg:
         self.MsgSeq: int = self.data.get('MsgSeq')
         self.Content: str = self.data.get('Content')
         self.RedBaginfo: dict = self.data.get('RedBaginfo')
+
+    def __getitem__(self, key):
+        return self.message[key]
 
 
 class EventMsg:
@@ -56,6 +62,9 @@ class EventMsg:
         self.MsgType: str = self.EventMsg.get('MsgType')
         self.ToUin: int = self.EventMsg.get('ToUin')
         self.RedBaginfo = self.EventMsg.get('RedBaginfo')
+
+    def __getitem__(self, key):
+        return self.message[key]
 
 
 model_map = {
