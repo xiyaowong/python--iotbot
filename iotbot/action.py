@@ -290,7 +290,19 @@ class Action:
 
     def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
         """获取群成员列表"""
-        return self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
+        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
+        #Count = data['Count']
+        #GroupUin = data['GroupUin']
+        LastUin = data['LastUin']
+        MemberList = data['MemberList']
+        while LastUin != 0:
+            time.sleep(1.1)
+            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
+            #Count += data['Count']
+            #GroupUin = data['GroupUin']
+            LastUin = data['LastUin']
+            MemberList += data['MemberList']
+        return MemberList
 
     def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs) -> dict:
         """设置群成员头衔"""
@@ -409,12 +421,14 @@ class Action:
                 timeout=timeout or self.__timeout
             )
             rep.raise_for_status()
-            if 'Ret' in rep.text and not rep.json()['Ret'] == 0:
-                if rep.json()['Ret'] == 241:
-                    self.logger.error(f'请求频繁: {rep.json()}')
-                else:
-                    self.logger.error(f'请求发送成功, 但处理失败: {rep.json()}')
-            return rep.json()
+            response = rep.json()
+            if 'Ret' in response:
+                if not response['Ret'] == 0:
+                    if response['Ret'] == 241:
+                        self.logger.error(f'请求频繁: {response}')
+                    else:
+                        self.logger.error(f'请求发送成功, 但处理失败: {response}')
+            return response
         except Exception as e:
             if isinstance(e, Timeout):
                 self.logger.warning('响应超时，但不代表处理未成功, 结果未知!')

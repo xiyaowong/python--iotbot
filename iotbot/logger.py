@@ -1,7 +1,6 @@
 import logging
 
-from colorama import Fore
-from colorama import init
+from colorama import Fore, init
 
 init(autoreset=True)
 
@@ -12,7 +11,7 @@ class Logger():
             logging.StreamHandler()
         ]
         if log_file_path:
-            handlers.append(logging.FileHandler(log_file_path))
+            handlers.append(logging.FileHandler(log_file_path,encoding="utf-8",mode="w"))
 
         logging.basicConfig(
             level=logging.INFO,
