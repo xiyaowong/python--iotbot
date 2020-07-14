@@ -11,7 +11,9 @@ import functools
 import json
 import os
 import time
+import traceback
 from queue import Queue
+from queue import deque
 from threading import Thread
 from typing import Callable
 
@@ -21,13 +23,20 @@ from requests.exceptions import Timeout
 from .client import IOTBOT
 from .logger import Logger
 
+WAIT_THEN_RUN = 1  # 延时一段时间，然后继续发送
+STOP_AND_DISCARD = 2  # 停止发送，删除剩余任务
+
 
 class Action:
     '''
     :param qq_or_bot: qq号或者机器人实例(`IOTBOT`)
     :param queue: 是否开启队列，开启后任务将按顺序发送并延时指定时间，此参数与`queue_delay`对应
                   启用后，发送方法`没有返回值`
-    :param queue_delay: 开启队列时发送每条消息间的延时, 保持默认即可
+    :param queue_delay: 与`队列`对应, 开启队列时发送每条消息间的延时, 保持默认即可
+    :param send_per_minute: 与`队列`对应, 指定每分钟最多执行多少条任务
+    :param send_per_minute_behavior: 与参数`send_per_minute`相关联, 指定每分钟发送量达到
+                                    限定值后，对剩余发送任务的处理方式
+    :param send_per_minute_callback: 当达到每分钟限制后调用的函数，接收参数为一个`元组`(剩余时间, 剩余任务数)
     :param timeout: 等待IOTBOT响应时间，不是发送请求的延时
     :param log_file_path: 日志文件路径
     :param api_path: 方法路径
@@ -39,6 +48,9 @@ class Action:
                  qq_or_bot=None,
                  queue=False,
                  queue_delay=1.1,
+                 send_per_minute: int = None,
+                 send_per_minute_behavior=WAIT_THEN_RUN,
+                 send_per_minute_callback=None,
                  timeout=15,
                  log_file_path=None,
                  api_path='/v1/LuaApiCaller',
@@ -54,6 +66,7 @@ class Action:
             self.qq = int(qq_or_bot)
         self.logger = Logger(log_file_path)
 
+        # 任务队列相关
         if queue:
             self.__use_queue = True
             self.__queue_delay = queue_delay
@@ -64,6 +77,15 @@ class Action:
             t.start()
         else:
             self.__use_queue = False
+        # 用来控制每分钟的发送频率
+        if queue and send_per_minute is not None:
+            assert isinstance(send_per_minute, int), '`send_per_minute` must be `integer`'
+            assert 0 < send_per_minute < 40, '0 到 40 之间！'  # emm
+            assert send_per_minute_behavior in (WAIT_THEN_RUN, STOP_AND_DISCARD), '二选一'
+            self.__limit_send = True
+            self.__send_count_deque = deque(maxlen=send_per_minute)
+            self.__send_per_minute_behavior = send_per_minute_behavior
+            self.__send_per_minute_callback = send_per_minute_callback
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
@@ -75,18 +97,39 @@ class Action:
         """
         发送队列线程
         负责执行队列的任务，并判断是否应该立即执行
+        包括处理每分钟发送数量限制
         """
         while True:
             job = self.__send_queue.get()  # type: Callable
             left_time = self.__queue_delay - (time.time() - self.__last_send_time)
             if left_time > 0:
                 # print(f'还没到发送时间...,请等待{left_time}s')
-                time.sleep(left_time)
+                time.sleep(left_time)  # 发送间隔延时
+
             try:
                 # print('即将发送....')
                 job()
-            except Exception as e:
-                print(f'出错了，我帮你处理了 -> {e}')
+                if self.__limit_send:  # 发送限额
+                    self.__send_count_deque.append(time.time())
+                    # print(self.__send_count_deque)
+                    if len(self.__send_count_deque) == self.__send_count_deque.maxlen:
+                        should_limited_time = 60 - (self.__send_count_deque[-1] - self.__send_count_deque[0])
+                        # print('should_limited_time -> ', should_limited_time)
+                        if should_limited_time > 0:
+                            # print('每分钟发送数量已达上限...')
+                            if self.__send_per_minute_behavior == STOP_AND_DISCARD:
+                                # print('清空队列...')
+                                while not self.__send_queue.empty():  # 貌似没有清空方法
+                                    self.__send_queue.get()
+                            if self.__send_per_minute_callback is not None:
+                                self.__send_per_minute_callback((should_limited_time, self.__send_queue.qsize()))
+                            time.sleep(should_limited_time)
+                            self.__send_count_deque.clear()
+                            # if self.__send_per_minute_behavior == WAIT_THEN_RUN:
+                            #     print('延时然后继续运行...')
+                            #     time.sleep(should_limited_time)
+            except Exception:
+                print(f'出错了，我帮你处理了 -> {traceback.format_exc()}')
             finally:
                 self.__last_send_time = time.time()
                 # print(f'上次运行时间：{self.__last_send_time}')
@@ -288,6 +331,23 @@ class Action:
         """获取群组列表"""
         return self.baseSender('POST', 'GetGroupList', {"NextToken": ""}, timeout, **kwargs)
 
+    def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> dict:
+        """获取群管理员列表"""
+        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
+        LastUin = data['LastUin']
+        MemberList = data['MemberList']
+        AdminList = []
+        while LastUin != 0:
+            time.sleep(1.1)
+            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
+            LastUin = data['LastUin']
+            MemberList += data['MemberList']
+            AdminList = [i for i in MemberList if i['GroupAdmin'] != 0]
+            if len(AdminList) == 10:
+                break
+        del LastUin, MemberList
+        return AdminList
+
     def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
         """获取群成员列表"""
         data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
@@ -429,9 +489,12 @@ class Action:
                     else:
                         self.logger.error(f'请求发送成功, 但处理失败: {response}')
             return response
+        except json.JSONDecodeError as e:
+            self.logger.error(repr(e))
+            return {}
         except Exception as e:
             if isinstance(e, Timeout):
                 self.logger.warning('响应超时，但不代表处理未成功, 结果未知!')
                 return {}
-            self.logger.error(f'出现错误: {e}')
+            self.logger.error(f'出现错误: {traceback.format_exc()}')
             return {}
