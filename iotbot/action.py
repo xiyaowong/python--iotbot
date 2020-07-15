@@ -212,7 +212,7 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='',
-                           picBase64Buf='', fileMd5='', timeout=10, **kwargs) -> dict:
+                           picBase64Buf='', fileMd5='', timeout=5, **kwargs) -> dict:
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
