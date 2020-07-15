@@ -66,6 +66,18 @@ class Action:
             self.qq = int(qq_or_bot)
         self.logger = Logger(log_file_path)
 
+        # 用来控制每分钟的发送频率
+        if queue and send_per_minute is not None:
+            assert isinstance(send_per_minute, int), '`send_per_minute` must be `integer`'
+            assert 0 < send_per_minute < 40, '0 到 40 之间！'  # emm
+            assert send_per_minute_behavior in (WAIT_THEN_RUN, STOP_AND_DISCARD), '二选一'
+            self.__limit_send = True
+            self.__send_count_deque = deque(maxlen=send_per_minute)
+            self.__send_per_minute_behavior = send_per_minute_behavior
+            self.__send_per_minute_callback = send_per_minute_callback
+        else:
+            self.__limit_send = False  # 发送线程需要这个数，要放在队列相关前面
+
         # 任务队列相关
         if queue:
             self.__use_queue = True
@@ -77,15 +89,6 @@ class Action:
             t.start()
         else:
             self.__use_queue = False
-        # 用来控制每分钟的发送频率
-        if queue and send_per_minute is not None:
-            assert isinstance(send_per_minute, int), '`send_per_minute` must be `integer`'
-            assert 0 < send_per_minute < 40, '0 到 40 之间！'  # emm
-            assert send_per_minute_behavior in (WAIT_THEN_RUN, STOP_AND_DISCARD), '二选一'
-            self.__limit_send = True
-            self.__send_count_deque = deque(maxlen=send_per_minute)
-            self.__send_per_minute_behavior = send_per_minute_behavior
-            self.__send_per_minute_callback = send_per_minute_callback
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
@@ -209,7 +212,7 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_group_pic_msg(self, toUser: int, picUrl='', flashPic=False, atUser=0, content='',
-                           picBase64Buf='', fileMd5='', timeout=3, **kwargs) -> dict:
+                           picBase64Buf='', fileMd5='', timeout=10, **kwargs) -> dict:
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
@@ -264,7 +267,7 @@ class Action:
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_private_pic_msg(self, toUser, groupid, picUrl='', picBase64Buf='', content='',
-                             fileMd5='', timeout=5, **kwargs) -> dict:
+                             fileMd5='', timeout=10, **kwargs) -> dict:
         """发送私聊图片"""
         data = {
             "toUser": toUser,
