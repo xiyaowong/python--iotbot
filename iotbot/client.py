@@ -77,9 +77,9 @@ class IOTBOT:
         self.__event_receivers_from_plugin = []
 
         # 消息上下文对象中间件
-        self.__friend_context_middleware: Callable[[FriendMsg], 'NewContext'] = None
-        self.__group_context_middleware: Callable[[GroupMsg], 'NewContext'] = None
-        self.__event_context_middleware: Callable[[EventMsg], 'NewContext'] = None
+        self.__friend_context_middleware: Callable[[FriendMsg], FriendMsg] = None
+        self.__group_context_middleware: Callable[[GroupMsg], GroupMsg] = None
+        self.__event_context_middleware: Callable[[EventMsg], EventMsg] = None
 
         if use_plugins:
             self.refresh_plugins()
@@ -240,19 +240,19 @@ class IOTBOT:
     ########################################################################
     # register context middleware
     ########################################################################
-    def register_friend_context_middleware(self, middleware: Callable[[FriendMsg], 'NewContext']):
+    def register_friend_context_middleware(self, middleware: Callable[[FriendMsg], FriendMsg]):
         """注册好友消息中间件"""
         if self.__friend_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(friend)')
         self.__friend_context_middleware = middleware
 
-    def register_group_context_middleware(self, middleware: Callable[[GroupMsg], 'NewContext']):
+    def register_group_context_middleware(self, middleware: Callable[[GroupMsg], GroupMsg]):
         """注册群消息中间件"""
         if self.__group_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(group)')
         self.__group_context_middleware = middleware
 
-    def register_event_context_middleware(self, middleware: Callable[[EventMsg], 'NewContext']):
+    def register_event_context_middleware(self, middleware: Callable[[EventMsg], EventMsg]):
         """注册事件消息中间件"""
         if self.__event_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(event)')

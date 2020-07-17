@@ -132,7 +132,7 @@ class Action:
                             #     print('延时然后继续运行...')
                             #     time.sleep(should_limited_time)
             except Exception:
-                print(f'出错了，我帮你处理了 -> {traceback.format_exc()}')
+                self.logger.warning(f'出错了，我帮你处理了 -> {traceback.format_exc()}')
             finally:
                 self.__last_send_time = time.time()
                 # print(f'上次运行时间：{self.__last_send_time}')
@@ -483,21 +483,21 @@ class Action:
                 json=data,
                 timeout=timeout or self.__timeout
             )
-            rep.raise_for_status()
-            response = rep.json()
-            if 'Ret' in response:
-                if not response['Ret'] == 0:
-                    if response['Ret'] == 241:
-                        self.logger.error(f'请求频繁: {response}')
-                    else:
-                        self.logger.error(f'请求发送成功, 但处理失败: {response}')
+            response = {}
+            if rep.status_code == 200:
+                response = rep.json()
+                if 'Ret' in response:
+                    if response['Ret'] != 0:
+                        if response['Ret'] == 241:
+                            self.logger.error(f'请求频繁: {response}')
+                        else:
+                            self.logger.error(f'请求发送成功, 但处理失败: {response}')
+            else:
+                self.logger.error(f'*****不是预期的Http响应码: {rep.status_code}*****')
             return response
-        except json.JSONDecodeError as e:
-            self.logger.error(repr(e))
-            return {}
         except Exception as e:
             if isinstance(e, Timeout):
                 self.logger.warning('响应超时，但不代表处理未成功, 结果未知!')
-                return {}
-            self.logger.error(f'出现错误: {traceback.format_exc()}')
+            else:
+                self.logger.error(f'出现错误: {traceback.format_exc()}')
             return {}
