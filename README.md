@@ -13,7 +13,7 @@ IOTBOT SDK with python
 ## Install
 
 ```shell
-pip install git+https://github.com/xiyaowong/python--iotbot.git@master
+pip install git+https://github.com/xiyaowong/python-iotbot.git@master
 ```
 
 ## Quick Start
@@ -34,7 +34,7 @@ def group(ctx: GroupMsg):
 
 bot.run()
 ```
-[documentation](https://python--iotbot.readthedocs.io/en/latest/ "documentation")
+[documentation](https://python-iotbot.readthedocs.io/en/latest/ "documentation")
 
 ## LICENSE
 
