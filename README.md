@@ -1,3 +1,6 @@
+```
+因为之前错误的改了github用户名，导致之前的python-iotbot仓库名不能使用了。所以没办法只能中间多加一个 【-】注意一下。。。:(
+```
 # python-iotbot
 
 ```
@@ -7,7 +10,7 @@ IOTBOT SDK with python
 ## Install
 
 ```shell
-pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
+pip install git+https://github.com/xiyaowong/python--iotbot.git@master
 ```
 
 ## Quick Start
@@ -28,7 +31,7 @@ def group(ctx: GroupMsg):
 
 bot.run()
 ```
-[documentation](https://python-iotbot.readthedocs.io/en/latest/ "documentation")
+[documentation](https://python--iotbot.readthedocs.io/en/latest/ "documentation")
 
 ## LICENSE
 
