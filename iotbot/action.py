@@ -92,7 +92,7 @@ class Action:
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
-        self.qq = bot.qq
+        self.qq = bot.qq[0]
         self.__port = bot.port
         self.__host = bot.host
 
