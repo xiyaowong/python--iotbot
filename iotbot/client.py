@@ -4,9 +4,12 @@ import logging
 import os
 import sys
 import time
+from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from typing import Callable
+from typing import List
+from typing import Union
 
 import socketio
 from prettytable import PrettyTable
@@ -31,7 +34,7 @@ def _deco_creater(bind_type):
 
 class IOTBOT:
     """
-    :param qq: 机器人QQ号
+    :param qq: 机器人QQ号(多Q就传qq号列表)
     :param use_plugins: 是否开启插件功能
     :param plugin_dir: 插件存放目录
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
@@ -44,7 +47,7 @@ class IOTBOT:
     """
 
     def __init__(self,
-                 qq: int,
+                 qq: Union[int, List[int]],
                  use_plugins=False,
                  plugin_dir='plugins',
                  group_blacklist: list = None,
@@ -54,7 +57,10 @@ class IOTBOT:
                  port=8888,
                  beat_delay=60,
                  host='http://127.0.0.1'):
-        self.qq = qq
+        if isinstance(qq, Sequence):
+            self.qq = qq
+        else:
+            self.qq = [qq]
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
         self.group_blacklist = group_blacklist or []
@@ -105,7 +111,8 @@ class IOTBOT:
     def connect(self):
         self.logger.info('Connected to server successfully!')
         while True:
-            self.socketio.emit('GetWebConn', str(self.qq))
+            for qq in self.qq:
+                self.socketio.emit('GetWebConn', str(qq))
             time.sleep(self.beat_delay)
 
     @property
@@ -305,4 +312,8 @@ class IOTBOT:
     on_event = _deco_creater('OnEvents')
 
     def __repr__(self):
-        return f'IOTBOT <{self.qq}> <host-{self.host}> <port-{self.port}>'
+        return 'IOTBOT <{}> <host-{}> <port-{}>'.format(
+            " ".join([str(i) for i in self.qq]),
+            self.host,
+            self.port
+        )
