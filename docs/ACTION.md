@@ -14,7 +14,7 @@ action = Action(123456)
 
 简单说明几个参数
 
-- qq_or_bot: qq 号或者机器人实例(`IOTBOT`)
+- qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，如果开启多 Q，将选取第一个 QQ
 - timeout: 等待 IOTBOT 响应时间即`requests`请求中的 timeout, 之前是推荐设置很低，这样提高效率，但现在已经不用了
 - log_file_path: 日志文件路径
 - api_path: 默认是'`/v1/LuaApiCaller'`， 如需更改，注意前面的斜杆
@@ -77,7 +77,18 @@ action = Action(123456)
 
 1. 开启队列后方法都没有返回值，所以只适合执行发送任务
 2. Action 必须定义为**全局变量**，不能放在接收函数内
-参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
+   参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
+
+### 发送限额(每分钟)
+
+可以设置每分钟允许最多发送多少条消息，因此只在**开启队列**后才有效
+参数：
+
+1. `send_per_minute` 每分钟发送多少条
+2. `send_per_minute_behavior` 如果每分钟发送条数满了，该怎么处理队列剩余的任务，可选项有 ①`action.WAIT_THEN_RUN`等待至下一分钟，再继续执行剩余任务 ②`action.STOP_AND_DISCARD`删除剩余任务
+3. 还有一个不太实用的参数`send_per_minute_callback`这个参数是一个函数，在每分钟发送条数满了之后自动调用，传给该函数的参数是一个元组 -> (剩余时间, 剩余任务数))
+
+其他说明：发送限额因为某些原因不好实现针对不同群聊进行分开记录，所以假定有两个群同时发送同一个指令，每分钟限制会把这些消息统计在一起。可以通过定义和使用不同的 action 来解决...
 
 ## sugar
 
@@ -91,7 +102,6 @@ Picture(pic_url='') # 同上，这里是发送图片消息
 Voice(...)
 ...
 ```
-
 
 具体参数看代码提示即可
 
