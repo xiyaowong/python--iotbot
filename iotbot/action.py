@@ -21,6 +21,7 @@ import requests
 from requests.exceptions import Timeout
 
 from .client import IOTBOT
+from .config import config
 from .logger import Logger
 
 WAIT_THEN_RUN = 1  # 延时一段时间，然后继续发送
@@ -58,8 +59,8 @@ class Action:
                  host='http://127.0.0.1'):
         self.__timeout = timeout
         self.__api_path = api_path
-        self.__port = int(os.getenv('IOTBOT_PORT') or port)
-        self.__host = os.getenv('IOTBOT_HOST') or host
+        self.__port = config.port or port
+        self.__host = config.host or host
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:

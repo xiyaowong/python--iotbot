@@ -1,2 +1,5 @@
 class ContextTypeError(Exception):
-    """Wrong context type"""
+    """不是正确的消息上下文对象"""
+
+class InvalidConfigError(Exception):
+    """配置文件有毛病"""

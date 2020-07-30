@@ -14,6 +14,7 @@ from typing import Union
 import socketio
 from prettytable import PrettyTable
 
+from .config import config
 from .logger import Logger
 from .model import EventMsg
 from .model import FriendMsg
@@ -65,22 +66,30 @@ class IOTBOT:
         self.plugin_dir = plugin_dir
         self.group_blacklist = group_blacklist or []
         self.friend_whitelist = friend_whitelist or []
-        self.host = os.getenv('IOTBOT_HOST') or host
-        self.port = int(os.getenv('IOTBOT_PORT') or port)
+        self.host = config.host or host
+        self.port = config.port or port
         self.beat_delay = beat_delay
         self.logger = Logger(log_file_path)
         if not log:
             logging.disable()
 
-        # 手动
+        # 手动添加的消息接收函数
         self.__friend_msg_receivers_from_hand = []
         self.__group_msg_receivers_from_hand = []
         self.__event_receivers_from_hand = []
 
-        # 插件
+        # 从插件加载的消息接收函数
         self.__friend_msg_receivers_from_plugin = []
         self.__group_msg_receivers_from_plugin = []
         self.__event_receivers_from_plugin = []
+
+        # webhook 里的消息接收函数，是特例
+        if config.webhook:
+            from . import _webhook
+            # 直接加载进 `hand`
+            self.__friend_msg_receivers_from_hand.append(_webhook.receive_friend_msg)
+            self.__group_msg_receivers_from_hand.append(_webhook.receive_group_msg)
+            self.__event_receivers_from_hand.append(_webhook.receive_events)
 
         # 消息上下文对象中间件
         self.__friend_context_middleware: Callable[[FriendMsg], FriendMsg] = None
@@ -106,6 +115,7 @@ class IOTBOT:
             try:
                 self.socketio.wait()
             except KeyboardInterrupt:
+                self.__executor.shutdown(wait=False)
                 sys.exit(0)
 
     def connect(self):
@@ -139,7 +149,7 @@ class IOTBOT:
     # message(context) receivers
     ########################################################################
     def refresh_plugins(self) -> bool:
-        '''刷新插件'''
+        '''刷新插件，更新从插件加载的消息接收函数列表'''
         if not self.use_plugins:
             self.logger.info('未开启插件功能!')
             return False

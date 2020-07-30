@@ -78,11 +78,13 @@ def Text(text: str,
 
 def Picture(pic_url='',
             pic_base64='',
-            pic_path=''):
+            pic_path='',
+            content=''):
     """发送图片 经支持群消息和好友消息接收函数内调用
     :param pic_url: 图片链接
     :param pic_base64: 图片base64编码
     :param pic_path: 图片文件路径
+    :param content: 包含的文字消息
 
     pic_url, pic_base64, pic_path必须给定一项
     """
@@ -122,12 +124,14 @@ def Picture(pic_url='',
         if pic_url:
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
-                picUrl=pic_url
+                picUrl=pic_url,
+                content=content
             )
         elif pic_base64:
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
-                picBase64Buf=pic_base64
+                picBase64Buf=pic_base64,
+                content=content
             )
         elif pic_path:
             with open(pic_path, 'rb') as f:
@@ -135,7 +139,8 @@ def Picture(pic_url='',
             b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
-                picBase64Buf=b64
+                picBase64Buf=b64,
+                content=content
             )
         return None
     ##################################################
@@ -148,12 +153,14 @@ def Picture(pic_url='',
         if pic_url:
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
-                picUrl=pic_url
+                picUrl=pic_url,
+                content=content
             )
         elif pic_base64:
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
-                picBase64Buf=pic_base64
+                picBase64Buf=pic_base64,
+                content=content
             )
         elif pic_path:
             with open(pic_path, 'rb') as f:
@@ -161,7 +168,8 @@ def Picture(pic_url='',
             b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
-                picBase64Buf=b64
+                picBase64Buf=b64,
+                content=content
             )
         return None
     else:
