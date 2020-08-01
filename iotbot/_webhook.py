@@ -61,7 +61,7 @@ def receive_friend_msg(ctx: FriendMsg):
                              timeout=config.webhook_timeout)
         resp.raise_for_status()
     except Exception:
-        pass
+        print(traceback.format_exc())
     else:
         try:
             data = resp.json()

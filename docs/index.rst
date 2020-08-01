@@ -15,8 +15,10 @@ Welcome to python-iotbot's documentation!
    QUICKSTART
    CLIENT
    ACTION
+   CONFIG
    PLUGIN
    DECORATORS
+   WEBHOOK
    SCAFFOLD
    OTHER
    SAMPLE
