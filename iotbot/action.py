@@ -9,7 +9,6 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 """
 import functools
 import json
-import os
 import time
 import traceback
 from queue import Queue
@@ -422,6 +421,14 @@ class Action:
     def you_shut_up(self, groupid, userid, shut_time=0, timeout=20, **kwargs) -> dict:
         """群成员禁言"""
         return self.baseSender('POST', 'OidbSvc.0x570_8', {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time}, timeout, **kwargs)
+
+    def like(self, userid: int, timeout=10, **kwargs) -> dict:
+        """通用点赞"""
+        return self.baseSender('POST', 'OidbSvc.0x7e5_4', {"UserID": userid}, timeout, **kwargs)
+
+    def like_2(self, userid: int, timeout=10, **kwargs) -> dict:
+        """测试赞(这里的测试只是与webapi描述一致)"""
+        return self.baseSender('POST', 'QQZan', {"UserID": userid}, timeout, **kwargs)
 
     def baseSender(self,
                    method: str,
