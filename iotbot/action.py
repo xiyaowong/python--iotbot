@@ -421,7 +421,7 @@ class Action:
 
     def you_shut_up(self, groupid, userid, shut_time=0, timeout=20, **kwargs) -> dict:
         """群成员禁言"""
-        return self.baseSender('POST', '', {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x570_8', {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time}, timeout, **kwargs)
 
     def baseSender(self,
                    method: str,

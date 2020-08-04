@@ -5,23 +5,20 @@ from .exceptions import InvalidConfigError
 
 class _config:
     def __init__(self, c: dict) -> None:
-        # 与iotbot 对应的配置
-        self.host: str = c.get('host')
-
-        port: str = c.get('port')
-        if port is not None and port.isdigit():
-            self.port = int(port)
-        else:
+        # 与iotbot 对应的配置, 不存在只能为None
+        self.host = str(c.get('host'))
+        try:
+            self.port = int(c.get('port'))
+        except ValueError:
             self.port = None
 
         # webhook 相关配置
-        self.webhook: bool = c.get('webhook') or False
-        self.webhook_post_url: str = c.get('webhook_post_url')
+        self.webhook = bool(c.get('webhook'))
+        self.webhook_post_url = str(c.get('webhook_post_url'))
 
-        webhook_timeout: str = c.get('webhook_timeout')
-        if webhook_timeout is not None and webhook_timeout.isdigit():
-            self.webhook_timeout = int(webhook_timeout)
-        else:
+        try:
+            self.webhook_timeout = int(c.get('webhook_timeout'))
+        except ValueError:
             self.webhook_timeout = 10
 
 

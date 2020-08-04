@@ -131,3 +131,5 @@ dmypy.json
 test.py
 test_plugins
 .iotbot.json
+
+.vscode/
