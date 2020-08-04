@@ -5,6 +5,7 @@ from .exceptions import InvalidConfigError
 
 
 def _check_schema(url: str) -> str:
+    print("url: ", url, type(url))
     if not re.findall(r'(http://|https://)', url):
         return "http://" + url
     return url
@@ -13,7 +14,12 @@ def _check_schema(url: str) -> str:
 class _config:
     def __init__(self, c: dict) -> None:
         # 与iotbot 对应的配置, 不存在只能为None
-        self.host = _check_schema(c.get('host'))
+        host = c.get('host')
+        if host:
+            self.host = _check_schema(str(host))
+        else:
+            self.host = None
+
         try:
             self.port = int(c.get('port'))
         except Exception:
@@ -21,7 +27,11 @@ class _config:
 
         # webhook 相关配置
         self.webhook = bool(c.get('webhook'))
-        self.webhook_post_url = _check_schema(c.get('webhook_post_url'))
+        webhook_post_url = c.get('webhook_post_url')
+        if webhook_post_url:
+            self.webhook_post_url = _check_schema(str(webhook_post_url))
+        else:
+            self.webhook_post_url = None
 
         try:
             self.webhook_timeout = int(c.get('webhook_timeout'))
