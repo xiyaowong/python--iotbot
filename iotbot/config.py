@@ -5,7 +5,6 @@ from .exceptions import InvalidConfigError
 
 
 def _check_schema(url: str) -> str:
-    print("url: ", url, type(url))
     if not re.findall(r'(http://|https://)', url):
         return "http://" + url
     return url
