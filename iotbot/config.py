@@ -1,24 +1,31 @@
 import json
+import re
 
 from .exceptions import InvalidConfigError
+
+
+def _check_schema(url: str) -> str:
+    if not re.findall(r'(http://|https://)', url):
+        return "http://" + url
+    return url
 
 
 class _config:
     def __init__(self, c: dict) -> None:
         # 与iotbot 对应的配置, 不存在只能为None
-        self.host = str(c.get('host'))
+        self.host = _check_schema(c.get('host'))
         try:
             self.port = int(c.get('port'))
-        except ValueError:
+        except Exception:
             self.port = None
 
         # webhook 相关配置
         self.webhook = bool(c.get('webhook'))
-        self.webhook_post_url = str(c.get('webhook_post_url'))
+        self.webhook_post_url = _check_schema(c.get('webhook_post_url'))
 
         try:
             self.webhook_timeout = int(c.get('webhook_timeout'))
-        except ValueError:
+        except Exception:
             self.webhook_timeout = 10
 
 
