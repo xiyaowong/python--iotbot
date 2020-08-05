@@ -66,7 +66,7 @@ class Action:
             self.qq = int(qq_or_bot)
         self.logger = Logger(log_file_path)
 
-        # 用来控制每分钟的发送频率
+        # 初始化用来控制每分钟的发送频率的相关配置
         if queue and send_per_minute is not None:
             assert isinstance(send_per_minute, int), '`send_per_minute` must be `integer`'
             assert 0 < send_per_minute < 40, '0 到 40 之间！'  # emm
@@ -84,17 +84,18 @@ class Action:
             self.__queue_delay = queue_delay
             self.__send_queue = Queue(maxsize=1000)
             self.__last_send_time = time.time()
-            # 开启发送队列线程
-            t = Thread(target=self.__send_thread)
-            t.start()
+            self._start_send_thread()
         else:
             self.__use_queue = False
 
-    def bind_bot(self, bot: IOTBOT):
-        """绑定机器人"""
-        self.qq = bot.qq[0]
-        self.__port = bot.port
-        self.__host = bot.host
+    def _start_send_thread(self):
+        # 如果模块有额外的线程，reload之后，之前的线程还是会运行.
+        # 虽然不影响程序使用，但应该挺浪费资源
+        # 目前找不到解决方法，暂时先用一个标记存储发送线程的状态，通过设置队列超时来跳出线程
+        # 添加队列任务时进行判断，如果线程已死就重启
+        self.__is_send_thread_dead = False
+        # 开启发送队列线程
+        Thread(target=self.__send_thread).start()
 
     def __send_thread(self):
         """
@@ -103,7 +104,13 @@ class Action:
         包括处理每分钟发送数量限制
         """
         while True:
-            job = self.__send_queue.get()  # type: Callable
+            # 见 _start_send_thread 注释
+            try:
+                # 12h
+                job = self.__send_queue.get(timeout=12 * 60 * 60)  # type: Callable
+            except Exception:
+                self.__is_send_thread_dead = True
+                break
             left_time = self.__queue_delay - (time.time() - self.__last_send_time)
             if left_time > 0:
                 # print(f'还没到发送时间...,请等待{left_time}s')
@@ -136,6 +143,12 @@ class Action:
             finally:
                 self.__last_send_time = time.time()
                 # print(f'上次运行时间：{self.__last_send_time}')
+
+    def bind_bot(self, bot: IOTBOT):
+        """绑定机器人"""
+        self.qq = bot.qq[0]
+        self.__port = bot.port
+        self.__host = bot.host
 
     def send_friend_text_msg(self, toUser: int, content: str, timeout=5, **kwargs) -> dict:
         """发送好友文本消息"""
@@ -462,6 +475,10 @@ class Action:
         functools.update_wrapper(job, self.baseSender)
         if self.__use_queue:
             self.__send_queue.put(job)
+            ###########################################
+            if self.__is_send_thread_dead:  # 重启线程
+                self._start_send_thread()
+            ###########################################
             # print('加入队列...')
             return None
         # print('不加入队列...')
