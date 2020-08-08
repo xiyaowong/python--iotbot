@@ -118,7 +118,7 @@ class IOTBOT:
         self.plugMgr.reload_plugin(plugin_name)
 
     def refresh_plugins(self):
-        '''刷新所有已加载的插件'''
+        '''刷新插件目录所有插件'''
         self.plugMgr.refresh()
         print(self.plugMgr.info_table)
 

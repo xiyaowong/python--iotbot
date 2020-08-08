@@ -37,7 +37,7 @@ bot = IOTBOT(your_bot_qq, use_plugins=True)
 1. 方法`bot.reload_plugins()` 重载旧插件，加载新插件
 2. 属性`bot.plugins` 获取插件名称列表，用于下面方法
 3. 方法`bot.reload_plugin(plugin_name)` 根据插件名重载对应插件
-4. 方法`bot.refresh_plugins()` 刷新已加载的插件，也就是说如果新建的一个插件文件，将不会加载进去
+4. 方法`bot.refresh_plugins()` 刷新插件目录所有插件
 5. 方法`bot.load_plugins()` 加载新插件，已加载插件不会重载
 
 以上方法是插件管理对象方法的快捷方式，也是**唯一推荐**的几个方法，如果你想更细致的管理插件，看下面：
@@ -45,7 +45,7 @@ bot = IOTBOT(your_bot_qq, use_plugins=True)
 直接调用 `bot.plugMgr` 的方法或属性
 
 1. `load_plugins()` 加载插件，不会重载，可指定参数 plugin_dir，如果该插件位于已停用插件列表，也不会被加载
-2. `refresh()` 刷新即重载已加载的所有插件
+2. `refresh()` 刷新插件目录所有插件
 3. `reload_plugins()` 重载旧插件，加载新插件。 可指定参数 plugin_dir
 4. `reload_plugin()` 根据插件名重载对应插件
 5. `remove_plugin()` 根据插件名停用对应插件

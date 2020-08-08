@@ -40,9 +40,9 @@ class PluginManager:
                 self._plugins[plugin.name] = plugin
 
     def refresh(self, plugin_dir: str = None) -> None:
-        '''reload all loaded plugins, not include removed plugin'''
-        for n, p in self._plugins.items():
-            self._plugins[n].module = importlib.reload(p.module)
+        '''reload all plugins'''
+        self._plugins.clear()
+        self.load_plugins(plugin_dir)
 
     def reload_plugins(self, plugin_dir: str = None) -> None:
         '''reload old, load new.'''
