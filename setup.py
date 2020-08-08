@@ -36,7 +36,7 @@ setup(
     ],
     entry_points='''
         [console_scripts]
-        iotbot=iotbot._cli:cli
+        iotbot=iotbot.cli:cli
     ''',
     classifiers=[
         'Programming Language :: Python :: 3.6',

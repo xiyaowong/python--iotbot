@@ -38,7 +38,7 @@ def receive_events(ctx: EventMsg):
             print('bye~')
             return
 
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_template.py')
+    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.py')
 
     c = input(f'将创建{fileName}.py文件, 机器人QQ为：{qq}。是否确定？ y/N: ')
     if c.lower() == 'y':

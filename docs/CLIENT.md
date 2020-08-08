@@ -25,9 +25,9 @@ bot = IOTBOT(123456)
 
 ## 注册接收函数
 
-在收到服务端消息后，会将消息作为参数传入每个消息接受函数(receiver)执行，但是不同于绑定
+在收到服务端消息后，会将消息作为参数传入每个消息接受函数(receiver)自动执行
 
-### 通过方法
+### 通过方法添加接收函数
 
 - bot.add_group_msg_receiver(func) # 群消息
 - bot.add_friend_msg_receiver(func) # 好友消息
@@ -35,7 +35,7 @@ bot = IOTBOT(123456)
 
 func 是对应的接收函数
 
-### 通过装饰器
+### 通过装饰器添加接收函数
 
 - @bot.on_group_msg # 群消息
 - @bot.on_friend_msg # 好友消息

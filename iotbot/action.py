@@ -106,8 +106,8 @@ class Action:
         while True:
             # 见 _start_send_thread 注释
             try:
-                # 12h
-                job = self.__send_queue.get(timeout=12 * 60 * 60)  # type: Callable
+                # 3h
+                job = self.__send_queue.get(timeout=3 * 60 * 60)  # type: Callable
             except Exception:
                 self.__is_send_thread_dead = True
                 break
@@ -511,6 +511,8 @@ class Action:
             response = {}
             if rep.status_code == 200:
                 response = rep.json()
+                if response is None:  # 什么时候这个东西会是None? 0.o
+                    return {}
                 if 'Ret' in response:
                     if response['Ret'] != 0:
                         if response['Ret'] == 241:

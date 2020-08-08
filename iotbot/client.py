@@ -1,18 +1,14 @@
 # pylint: disable = too-many-instance-attributes
-import importlib
 import logging
-import os
 import sys
 import time
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
 from typing import Callable
 from typing import List
 from typing import Union
 
 import socketio
-from prettytable import PrettyTable
 
 from .config import config
 from .logger import Logger
@@ -20,6 +16,10 @@ from .model import EventMsg
 from .model import FriendMsg
 from .model import GroupMsg
 from .model import model_map
+from .plugin import PluginManager
+from .typing import EventMsgReceiver
+from .typing import FriendMsgReceiver
+from .typing import GroupMsgReceiver
 
 
 def _deco_creater(bind_type):
@@ -59,13 +59,13 @@ class IOTBOT:
                  beat_delay=60,
                  host='http://127.0.0.1'):
         if isinstance(qq, Sequence):
-            self.qq = qq
+            self.qq = set(qq)
         else:
             self.qq = [qq]
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
-        self.group_blacklist = group_blacklist or []
-        self.friend_whitelist = friend_whitelist or []
+        self.group_blacklist = set(group_blacklist or [])
+        self.friend_whitelist = set(friend_whitelist or [])
         self.host = config.host or host
         self.port = config.port or port
         self.beat_delay = beat_delay
@@ -78,30 +78,54 @@ class IOTBOT:
         self.__group_msg_receivers_from_hand = []
         self.__event_receivers_from_hand = []
 
-        # 从插件加载的消息接收函数
-        self.__friend_msg_receivers_from_plugin = []
-        self.__group_msg_receivers_from_plugin = []
-        self.__event_receivers_from_plugin = []
-
         # webhook 里的消息接收函数，是特例
         if config.webhook:
-            from . import _webhook
+            from . import webhook
             # 直接加载进 `hand`
-            self.__friend_msg_receivers_from_hand.append(_webhook.receive_friend_msg)
-            self.__group_msg_receivers_from_hand.append(_webhook.receive_group_msg)
-            self.__event_receivers_from_hand.append(_webhook.receive_events)
+            self.__friend_msg_receivers_from_hand.append(webhook.receive_friend_msg)
+            self.__group_msg_receivers_from_hand.append(webhook.receive_group_msg)
+            self.__event_receivers_from_hand.append(webhook.receive_events)
 
         # 消息上下文对象中间件
         self.__friend_context_middleware: Callable[[FriendMsg], FriendMsg] = None
         self.__group_context_middleware: Callable[[GroupMsg], GroupMsg] = None
         self.__event_context_middleware: Callable[[EventMsg], EventMsg] = None
 
+        # 插件管理
+        self.plugMgr = PluginManager(self.plugin_dir)
         if use_plugins:
-            self.refresh_plugins()
+            self.plugMgr.load_plugins()
+            print(self.plugMgr.info_table)
 
         self.__initialize_socketio()
         self.__refresh_executor()
         self.__initialize_handlers()
+
+    ########################################################################
+    # shortcuts to call plugin manager methods
+    ########################################################################
+    # 只推荐使用这几个方法，其他的需要通过 plugMgr 对象访问
+    def load_plugins(self):
+        '''加载新插件'''
+        self.plugMgr.load_plugins()
+
+    def reload_plugins(self):
+        '''重载旧插件，加载新插件'''
+        self.plugMgr.reload_plugins()
+
+    def reload_plugin(self, plugin_name: str):
+        '''重载指定插件'''
+        self.plugMgr.reload_plugin(plugin_name)
+
+    def refresh_plugins(self):
+        '''刷新所有已加载的插件'''
+        self.plugMgr.refresh()
+        print(self.plugMgr.info_table)
+
+    def plugins(self):
+        '''插件名列表'''
+        return self.plugMgr.plugins
+    ########################################################################
 
     def run(self):
         self.logger.info('Connecting to the server...')
@@ -129,11 +153,11 @@ class IOTBOT:
     def receivers(self):
         '''消息处理函数数量'''
         return {
-            'friend': len((*self.__friend_msg_receivers_from_plugin,
+            'friend': len((*self.plugMgr.friend_msg_receivers,
                            *self.__friend_msg_receivers_from_hand)),
-            'group': len((*self.__group_msg_receivers_from_plugin,
+            'group': len((*self.plugMgr.group_msg_receivers,
                           *self.__group_msg_receivers_from_hand)),
-            'event': len((*self.__event_receivers_from_plugin,
+            'event': len((*self.plugMgr.event_receivers,
                           *self.__event_receivers_from_hand))
         }
 
@@ -145,88 +169,28 @@ class IOTBOT:
         self.socketio = socketio.Client()
         self.socketio.event()(self.connect)
 
-    ########################################################################
-    # message(context) receivers
-    ########################################################################
-    def refresh_plugins(self) -> bool:
-        '''刷新插件，更新从插件加载的消息接收函数列表'''
-        if not self.use_plugins:
-            self.logger.info('未开启插件功能!')
-            return False
-        try:
-            plugin_names = [i.split('.')[0] for i in os.listdir(self.plugin_dir)
-                            if i.startswith('bot_') and i.endswith('.py')]
-        except FileNotFoundError:
-            self.logger.warning(f'你开启了插件功能，但是插件目录不存在[{self.plugin_dir}]')
-            return False
-        else:
-            # 将原始清空，防止重复添加，这里用集合不能解决问题
-            for i in [self.__group_msg_receivers_from_plugin,
-                      self.__friend_msg_receivers_from_plugin,
-                      self.__event_receivers_from_plugin]:
-                i.clear()
-            plugin_count = {'friend': [], 'group': [], 'event': []}  # 无关紧要的东西，用来临时保存插件信息
-            for plugin_name in plugin_names:
-                plugin = getattr(__import__(f'{self.plugin_dir}.{plugin_name}'), plugin_name)
-                importlib.reload(plugin)
-                if hasattr(plugin, 'receive_friend_msg'):
-                    self.__friend_msg_receivers_from_plugin.append(plugin.receive_friend_msg)
-                    plugin_count['friend'].append(plugin_name)
-                if hasattr(plugin, 'receive_group_msg'):
-                    self.__group_msg_receivers_from_plugin.append(plugin.receive_group_msg)
-                    plugin_count['group'].append(plugin_name)
-                if hasattr(plugin, 'receive_events'):
-                    self.__event_receivers_from_plugin.append(plugin.receive_events)
-                    plugin_count['event'].append(plugin_name)
-            ################构建提示信息##################
-            temp = {'friend': [], 'group': [], 'event': []}
-            for category, statistic in plugin_count.items():
-                for item in set(statistic):
-                    temp[category].append(('{}<{}>'.format(item, statistic.count(item))))
-
-            table = PrettyTable(['Receiver', 'Count', 'Info'])
-            table.add_row([
-                'Friend Msg Receiver',
-                len(self.__friend_msg_receivers_from_plugin),
-                ' '.join(temp['friend'])
-            ])
-            table.add_row([
-                'Group  Msg Receiver',
-                len(self.__group_msg_receivers_from_plugin),
-                ' '.join(temp['group'])
-            ])
-            table.add_row([
-                'Event      Receiver',
-                len(self.__event_receivers_from_plugin),
-                ' '.join(temp['event'])
-            ])
-            print(table)
-            ###############################################
-            self.__refresh_executor()
-            return True
-
     def __refresh_executor(self):
         # 根据消息接收函数数量初始化线程池
         self.__executor = ThreadPoolExecutor(max_workers=min(50, len([  # 减小数量，控制消息频率
-            *self.__friend_msg_receivers_from_plugin,
+            *self.plugMgr.friend_msg_receivers,
             *self.__friend_msg_receivers_from_hand,
-            *self.__group_msg_receivers_from_plugin,
+            *self.plugMgr.group_msg_receivers,
             *self.__group_msg_receivers_from_hand,
-            *self.__event_receivers_from_plugin,
+            *self.plugMgr.event_receivers,
             *self.__event_receivers_from_hand,
             *range(3)
         ]) * 2))
 
     # 手动添加
-    def add_group_msg_receiver(self, func: Callable[[GroupMsg], Any]):
+    def add_group_msg_receiver(self, func: GroupMsgReceiver):
         '''添加群消息接收函数'''
         self.__group_msg_receivers_from_hand.append(func)
 
-    def add_friend_msg_receiver(self, func: Callable[[FriendMsg], Any]):
+    def add_friend_msg_receiver(self, func: FriendMsgReceiver):
         '''添加好友消息接收函数'''
         self.__friend_msg_receivers_from_hand.append(func)
 
-    def add_event_receiver(self, func: Callable[[EventMsg], Any]):
+    def add_event_receiver(self, func: EventMsgReceiver):
         '''添加事件消息接收函数'''
         self.__event_receivers_from_hand.append(func)
 
@@ -235,21 +199,21 @@ class IOTBOT:
     ########################################################################
     def __friend_context_distributor(self, context: FriendMsg):
         for f_receiver in [*self.__friend_msg_receivers_from_hand,
-                           *self.__friend_msg_receivers_from_plugin]:
+                           *self.plugMgr.friend_msg_receivers]:
             (self.__executor
              .submit(f_receiver, context)
              .add_done_callback(self.__thread_pool_callback))
 
     def __group_context_distributor(self, context: GroupMsg):
         for g_receiver in [*self.__group_msg_receivers_from_hand,
-                           *self.__group_msg_receivers_from_plugin]:
+                           *self.plugMgr.group_msg_receivers]:
             (self.__executor
              .submit(g_receiver, context)
              .add_done_callback(self.__thread_pool_callback))
 
     def __event_context_distributor(self, context: EventMsg):
         for e_receiver in [*self.__event_receivers_from_hand,
-                           *self.__event_receivers_from_plugin]:
+                           *self.plugMgr.event_receivers]:
             (self.__executor
              .submit(e_receiver, context)
              .add_done_callback(self.__thread_pool_callback))
@@ -284,7 +248,7 @@ class IOTBOT:
             raise worker_exception
 
     def __friend_msg_handler(self, msg):
-        context = model_map['OnFriendMsgs'](msg)  # type:FriendMsg
+        context: FriendMsg = model_map['OnFriendMsgs'](msg)
         # 白名单
         if self.friend_whitelist:
             if context.FromUin not in self.friend_whitelist:
@@ -295,7 +259,7 @@ class IOTBOT:
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
-        context = model_map['OnGroupMsgs'](msg)  # type:GroupMsg
+        context: GroupMsg = model_map['OnGroupMsgs'](msg)
         # 黑名单
         if context.FromGroupId in self.group_blacklist:
             return
@@ -305,7 +269,7 @@ class IOTBOT:
         self.__executor.submit(self.__group_context_distributor, context)
 
     def __event_msg_handler(self, msg):
-        context = model_map['OnEvents'](msg)  # type: EventMsg
+        context: EventMsg = model_map['OnEvents'](msg)
         # 中间件
         if self.__event_context_middleware is not None:
             context = self.__event_context_middleware(context)

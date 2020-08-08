@@ -3,3 +3,6 @@ class ContextTypeError(Exception):
 
 class InvalidConfigError(Exception):
     """配置文件有毛病"""
+
+class InvalidPluginError(Exception):
+    """插件问题"""
