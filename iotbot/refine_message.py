@@ -1,5 +1,4 @@
 """进一步提取消息详细信息的函数"""
-import json
 from typing import List
 
 from .exceptions import ContextTypeError
@@ -8,6 +7,11 @@ from .model import FriendMsg
 from .model import GroupMsg
 from .utils import EventNames
 from .utils import MsgTypes
+
+try:
+    import ujson as json
+except Exception:
+    import json
 
 
 #############################Event begin########################################

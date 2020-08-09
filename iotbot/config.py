@@ -1,8 +1,12 @@
-import json
 import re
 from typing import List
 
 from .exceptions import InvalidConfigError
+
+try:
+    import ujson as json
+except Exception:
+    import json
 
 
 def _check_schema(url: str) -> str:

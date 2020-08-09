@@ -8,7 +8,6 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 不过发送去的操作是能正常完成的。
 """
 import functools
-import json
 import re
 import time
 import traceback
@@ -25,6 +24,13 @@ from requests.exceptions import Timeout
 from .client import IOTBOT
 from .config import config
 from .logger import Logger
+
+try:
+    import ujson as json
+except Exception:
+    import json
+
+
 
 WAIT_THEN_RUN = 1  # 延时一段时间，然后继续发送
 STOP_AND_DISCARD = 2  # 停止发送，删除剩余任务
