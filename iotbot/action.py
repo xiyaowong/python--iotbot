@@ -9,12 +9,15 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 """
 import functools
 import json
+import re
 import time
 import traceback
 from queue import Queue
 from queue import deque
 from threading import Thread
+from typing import Any
 from typing import Callable
+from typing import Union
 
 import requests
 from requests.exceptions import Timeout
@@ -37,7 +40,7 @@ class Action:
     :param send_per_minute_behavior: 与参数`send_per_minute`相关联, 指定每分钟发送量达到
                                     限定值后，对剩余发送任务的处理方式
     :param send_per_minute_callback: 当达到每分钟限制后调用的函数，接收参数为一个`元组`(剩余时间, 剩余任务数)
-    :param timeout: 等待IOTBOT响应时间，不是发送请求的延时
+    :param timeout: 等待IOTBOT响应时间和发送请求的延时
     :param log_file_path: 日志文件路径
     :param api_path: 方法路径
     :param port: 端口
@@ -45,17 +48,17 @@ class Action:
     '''
 
     def __init__(self,
-                 qq_or_bot=None,
-                 queue=False,
-                 queue_delay=1.1,
+                 qq_or_bot: Union[int, IOTBOT] = None,
+                 queue: bool = False,
+                 queue_delay: Union[int, float] = 1.1,
                  send_per_minute: int = None,
-                 send_per_minute_behavior=WAIT_THEN_RUN,
-                 send_per_minute_callback=None,
-                 timeout=15,
-                 log_file_path=None,
-                 api_path='/v1/LuaApiCaller',
-                 port=8888,
-                 host='http://127.0.0.1'):
+                 send_per_minute_behavior: int = WAIT_THEN_RUN,
+                 send_per_minute_callback: Callable[[int, int], Any] = None,
+                 timeout: int = 15,
+                 log_file_path: str = None,
+                 api_path: str = '/v1/LuaApiCaller',
+                 port: int = 8888,
+                 host: str = 'http://127.0.0.1'):
         self.__timeout = timeout
         self.__api_path = api_path
         self.__port = config.port or port
@@ -443,6 +446,26 @@ class Action:
         """测试赞(这里的测试只是与webapi描述一致)"""
         return self.baseSender('POST', 'QQZan', {"UserID": userid}, timeout, **kwargs)
 
+    def logout(self, flag=False, timeout=5, **kwargs) -> bool:
+        '''退出QQ
+        :param flag:是否删除设备信息文件
+        '''
+        return self.baseSender('POST', 'LogOut', {"Flag": flag}, timeout, **kwargs)
+
+    def get_login_qrcode(self) -> str:
+        '''返回登录二维码的base64'''
+        try:
+            resp = requests.get(
+                '{}:{}/v1/Login/GetQRcode'.format(self.__host, self.__port), timeout=10)
+        except Exception as e:
+            self.logger.error('http请求错误 %s' % str(e))
+        else:
+            try:
+                return re.findall(r'"data:image/png;base64,(.*?)"', resp.text)[0]
+            except IndexError:
+                self.logger.error('base64获取失败')
+        return ''
+
     def baseSender(self,
                    method: str,
                    funcname: str,
@@ -450,7 +473,7 @@ class Action:
                    timeout: int = None,
                    api_path: str = None,
                    iot_timeout: int = None,
-                   bot_qq: int = None) -> dict:
+                   bot_qq: int = None) -> Union[dict, bool]:
         """
         :param method: 请求方法
         :param funcname: 请求类型
@@ -491,7 +514,7 @@ class Action:
                     timeout: int = None,
                     api_path: str = None,
                     iot_timeout: int = None,
-                    bot_qq: int = None) -> dict:
+                    bot_qq: int = None) -> Union[dict, bool]:
         params = {
             'funcname': funcname,
             'timeout': iot_timeout or self.__timeout,

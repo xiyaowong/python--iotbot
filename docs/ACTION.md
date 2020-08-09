@@ -1,7 +1,7 @@
 # 动作
 
 ```
-这个类封装了大部分IOTBOT webapi
+这个类封装了大部分webapi, 并添加了部分常用方法
 ```
 
 ## 初始化
@@ -10,16 +10,27 @@
 from iotbot import Action
 
 action = Action(123456)
+'''
+必选参数：
+qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，如果开启多Q，将选取第一个 QQ
+
+可选参数:
+与发送队列有关的参数:
+queue:
+queue_delay:
+send_per_minute:
+send_per_minute_behavior:
+send_per_minute_callback:
+------
+timeout:
+log_file_path:
+api_path:
+port:
+host:
+'''
 ```
 
-简单说明几个参数
-
-- qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，如果开启多 Q，将选取第一个 QQ
-- timeout: 等待 IOTBOT 响应时间即`requests`请求中的 timeout, 之前是推荐设置很低，这样提高效率，但现在已经不用了
-- log_file_path: 日志文件路径
-- api_path: 默认是'`/v1/LuaApiCaller'`， 如需更改，注意前面的斜杆
-
-**每个方法有完善的代码提示，参数命名也对应原 api 数据命名，所以不说明了。对于参数的疑问请先了解 iotqq 提供 webapi 文档**
+**每个方法有完善的代码提示，参数命名也对应原 api 数据命名，所以不说明了。对于参数的疑问请先查询 iotqq 提供 webapi 文档**
 
 ## Action.baseSender
 
@@ -69,12 +80,18 @@ action = Action(123456)
 | all_shut_up_on         | 开启全员禁言                                      |
 | all_shut_up_off        | 关闭全员禁言                                      |
 | you_shut_up            | 群成员禁言                                        |
+| like                   | 通用 call 点赞                                    |
+| like_2                 | 点赞                                              |
+| logout                 | 退出 qq                                           |
+| get_login_qrcode       | 获取登录二维码的 base64 编码                      |
 
 ## 发送队列
 
+发送过快会导致发送失败，或消息被 tx 屏蔽, 所以某些情况很有必要开启，特别是发图
+
 初始化`Action`时设置参数`queue`为`True`即可以队列的方式执行发送任务，开启后对应有两个参数可以设置
 
-`queue_delay` 队列每一次发送之间的延时，一般保持默认即可，这是群内大佬的经验数值吧
+`queue_delay` 队列每一次发送之间的延时，一般保持默认即可，这是群内大佬的经验数值
 
 **注意**:
 
@@ -114,4 +131,6 @@ Voice(...)
 
 以后若有添加，不会在写在这里，更新后留意代码补全列表即可
 
-tips: 完全可以用这个替代shell脚本执行定时任务
+## Tips
+
+因为 Action 和 IOTBOT 实例完全解耦，用这个替代 shell 脚本执行定时任务，会很方便

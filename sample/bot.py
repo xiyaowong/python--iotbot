@@ -1,32 +1,21 @@
-import time
-from queue import deque
-
 import requests
-from iotbot import IOTBOT, Action, GroupMsg
 
-bot_qq = 11111111
-bot = IOTBOT(
-    bot_qq,
-    use_plugins=True
-)
+from iotbot import IOTBOT
+from iotbot import Action
+from iotbot import GroupMsg
+
+bot_qq = 123
+bot = IOTBOT(bot_qq, use_plugins=True, plugin_dir='plugins')
 action = Action(bot)
-
-master = 111111111  # 主人qq
-
-# 用于自动回复功能
-big_mouth_len = 3  # 连续多少条相同信息时+1
-big_mouth_deque = deque(maxlen=big_mouth_len)
-for i in range(big_mouth_len):
-    big_mouth_deque.append(i)  # 初始化
 
 
 # 群消息中间件使用示例
 def group_ctx_middleware(ctx):
-    ctx.master = 12345678
+    ctx.master = 333  # 主人qq
 
 
 bot.register_group_context_middleware(group_ctx_middleware)
-############
+####################
 
 
 @bot.on_group_msg
@@ -34,30 +23,30 @@ def on_group_msg(ctx: GroupMsg):
     # 不处理自身消息
     if ctx.FromUserId == ctx.CurrentQQ:
         return
-    content = ctx.Content  # type: str
+    content = ctx.Content
 
-    # 刷新插件
-    if ctx.FromUserId == master and content == '刷新插件':
-        time.sleep(2)
-        if bot.refresh_plugins():
-            action.send_group_text_msg(ctx.FromGroupId, '好了')
-        else:
-            action.send_group_text_msg(ctx.FromGroupId, '失败了')
-        time.sleep(2)
-        return
-
-    # 自动回复 +1
-    # TODO: 要修改群号
-    if ctx.FromGroupId == 111111111111:  # 这里只处理一个群聊
-        if ctx.MsgType == 'TextMsg' and len(content) < 20:  # 只复读文本消息和不超长度
-            big_mouth_deque.append(content)
-            if len(set(big_mouth_deque)) == 1:
-                action.send_group_text_msg(ctx.FromGroupId, content=content)
-                for i in range(big_mouth_len):
-                    big_mouth_deque.append(i)
+    # ==========插件管理==========
+    if ctx.FromUserId == ctx.master:  # 因为中间件添加了，所以可以直接访问
+        if content == '刷新所有插件':
+            bot.refresh_plugins()
+            return
+        elif content == '加载新插件':
+            bot.load_plugins()
+            return
+        elif content.startswith('刷新插件'):  # 重载指定插件
+            plugin_name = content[4:]
+            bot.reload_plugin(plugin_name)
+            return
+        elif content == 'py插件':
+            action.send_group_text_msg(
+                ctx.FromGroupId,
+                '\n'.join(bot.plugins)
+            )
+            return
+    # ===========================
 
     # 召唤群友(回执消息)
-    if ctx.FromUserId == master and content == '召唤群友':
+    if ctx.FromUserId == ctx.master and content == '召唤群友':
         card = """<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="107" templateID="1" action="viewReceiptMessage" brief="[回执消息]" m_resid="1tko/MQMaPR0jedOx6T8tbleZtAZudGqTFakakLqukDzuTjrZS1/1V1QEUnZ8/2Y" m_fileName="6828184148041033822" sourceMsgId="0" url="" flag="3" adverSign="0" multiMsgFlag="0"><item layout="29" advertiser_id="0" aid="0"><type>1</type></item><source name="" icon="" action="" appid="-1" /></msg>"""
         action.send_group_xml_msg(ctx.FromGroupId, content=card)
         return

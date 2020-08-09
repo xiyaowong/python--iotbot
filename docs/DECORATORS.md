@@ -1,10 +1,11 @@
 # 接收函数装饰器
 
-这里提供了几个装饰器可快速管理指令，可用于快速构建简单的插件
+这里提供了几个装饰器可快速管理接收函数，可用于快速构建简单的插件
 
 ## 作用一览
 
 ### in_content
+
 ```python
 def in_content(string: str):
     """
@@ -14,6 +15,7 @@ def in_content(string: str):
 ```
 
 ### equal_content
+
 ```python
 def equal_content(string: str):
     """
@@ -22,6 +24,7 @@ def equal_content(string: str):
 ```
 
 ### not_these_users
+
 ```python
 def not_these_users(users: list):
      """仅接受这些人的消息
@@ -30,6 +33,7 @@ def not_these_users(users: list):
 ```
 
 ### only_this_msg_type
+
 ```python
 def only_this_msg_type(msg_type: str):
     """仅接受该类型消息
@@ -38,6 +42,7 @@ def only_this_msg_type(msg_type: str):
 ```
 
 ### not_these_groups
+
 ```python
 def not_these_groups(groups: list):
     """不接受这些群组的消息
@@ -46,6 +51,7 @@ def not_these_groups(groups: list):
 ```
 
 ### only_these_groups
+
 ```python
 def only_these_groups(groups: list):
     """只接受这些群组的消息
@@ -54,12 +60,13 @@ def only_these_groups(groups: list):
 ```
 
 ## 使用示例
+
 `app.py`
 
 ```python
 import iotbot.decorators as deco
 
-...省略常规定义部分
+... # 省略常规定义部分
 
 @bot.on_group_msg
 @deco.only_these_users([111, 222])
