@@ -1,6 +1,7 @@
 # pylint: disable = too-many-instance-attributes
 import copy
 import logging
+import os
 import sys
 import time
 from collections.abc import Sequence
@@ -62,6 +63,7 @@ class IOTBOT:
         if isinstance(qq, Sequence):
             self.qq = list(qq)
         else:
+            os.environ['SINGLE_BOTQQ'] = str(qq)
             self.qq = [qq]
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir

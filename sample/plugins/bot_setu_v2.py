@@ -1,5 +1,4 @@
 # https://github.com/yuban10703/IOTQQ-color_pic
-import os
 import re
 
 import requests
@@ -12,7 +11,6 @@ pattern = r'来(.*?)[点丶份张幅](.*?)的?[色瑟涩][图圖]'
 api = 'http://api.yuban10703.xyz:2333/setu_v3'
 
 action = Action(
-    int(os.getenv('BOTQQ') or 123456),
     queue=True
 )
 

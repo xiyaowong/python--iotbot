@@ -8,6 +8,7 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 不过发送去的操作是能正常完成的。
 """
 import functools
+import os
 import re
 import time
 import traceback
@@ -72,7 +73,7 @@ class Action:
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:
-            self.qq = int(qq_or_bot)
+            self.qq = int(qq_or_bot or os.getenv('SINGLE_BOTQQ'))
         self.logger = Logger(log_file_path)
 
         # 初始化用来控制每分钟的发送频率的相关配置

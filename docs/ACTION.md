@@ -11,8 +11,8 @@ from iotbot import Action
 
 action = Action(123456)
 '''
-必选参数：
-qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，如果开启多Q，将选取第一个 QQ
+重要参数：
+qq_or_bot: 默认为当前机器人实例(IOTBOT)中的 QQ 号，可自己传入其他 QQ 号或者机器人实例(IOTBOT), 如果传入机器人实例且开启多Q，将选取第一个 QQ
 
 可选参数:
 与发送队列有关的参数:
