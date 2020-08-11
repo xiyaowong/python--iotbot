@@ -1,6 +1,5 @@
 # pylint: disable = too-many-instance-attributes
 import copy
-import logging
 import sys
 import time
 from collections.abc import Sequence
@@ -10,9 +9,9 @@ from typing import List
 from typing import Union
 
 import socketio
+from loguru import logger
 
 from .config import config
-from .logger import Logger
 from .model import EventMsg
 from .model import FriendMsg
 from .model import GroupMsg
@@ -21,6 +20,13 @@ from .plugin import PluginManager
 from .typing import EventMsgReceiver
 from .typing import FriendMsgReceiver
 from .typing import GroupMsgReceiver
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    format='{level.icon} {time:YYYY-MM-DD HH:mm:ss} <lvl>{level}\t{message}</lvl>',
+    colorize=True
+)
 
 
 def _deco_creater(bind_type):
@@ -42,7 +48,7 @@ class IOTBOT:
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
     :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
     :param log: 是否开启日志
-    :param log_file_path: 日志文件路径
+    :param log_file: 是否文件日志
     :param port: 运行端口
     :param beat_delay: 心跳延时时间（s）
     :param host: ip，需要包含schema
@@ -55,7 +61,7 @@ class IOTBOT:
                  group_blacklist: List[int] = None,
                  friend_blacklist: List[int] = None,
                  log: bool = True,
-                 log_file_path: str = None,
+                 log_file: bool = True,
                  port: int = 8888,
                  beat_delay: int = 60,
                  host: str = 'http://127.0.0.1'):
@@ -68,11 +74,18 @@ class IOTBOT:
         self.host = config.host or host
         self.port = config.port or port
         self.beat_delay = beat_delay
-        self.logger = Logger(log_file_path)
-        if not log:
-            logging.disable()
         self.group_blacklist = set(config.group_blacklist or group_blacklist or [])
         self.friend_blacklist = set(config.friend_blacklist or friend_blacklist or [])
+
+        if log:
+            if log_file:
+                logger.add(
+                    './logs/{time}.log',
+                    format='{time:YYYY-MM-DD HH:mm} {level}\t{message}',
+                    rotation='1 day'
+                )
+        else:
+            logger.disable(__name__)
 
         # 手动添加的消息接收函数
         self.__friend_msg_receivers_from_hand = []
@@ -131,12 +144,12 @@ class IOTBOT:
     ########################################################################
 
     def run(self):
-        self.logger.info('Connecting to the server...')
+        logger.info('Connecting to the server...')
 
         try:
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
-        except Exception as e:
-            self.logger.error(f'启动失败 -> {e}')
+        except Exception:
+            logger.exception('启动失败')
             sys.exit(1)
         else:
             try:
@@ -146,10 +159,11 @@ class IOTBOT:
                 sys.exit(0)
 
     def connect(self):
-        self.logger.info('Connected to server successfully!')
+        logger.success('Connected to server successfully!')
         while True:
             for qq in self.qq:
                 self.socketio.emit('GetWebConn', str(qq))
+                logger.info(f'Heartbeat -> {qq}')
             time.sleep(self.beat_delay)
 
     @property
@@ -166,7 +180,7 @@ class IOTBOT:
 
     @receivers.setter
     def receivers(self, _):
-        self.logger.warning('The attribute receivers is read-only!')
+        logger.warning('The attribute receivers is read-only!')
 
     def __initialize_socketio(self):
         self.socketio = socketio.Client()
@@ -245,6 +259,7 @@ class IOTBOT:
     ########################################################################
     # message handler
     ########################################################################
+    @logger.catch
     def __thread_pool_callback(self, worker):
         worker_exception = worker.exception()
         if worker_exception:
@@ -252,6 +267,7 @@ class IOTBOT:
 
     def __friend_msg_handler(self, msg):
         context: FriendMsg = model_map['OnFriendMsgs'](msg)
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
         if context.FromUin in self.friend_blacklist:
             return
@@ -264,6 +280,7 @@ class IOTBOT:
 
     def __group_msg_handler(self, msg):
         context: GroupMsg = model_map['OnGroupMsgs'](msg)
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
         if context.FromGroupId in self.group_blacklist:
             return
@@ -276,6 +293,7 @@ class IOTBOT:
 
     def __event_msg_handler(self, msg):
         context: EventMsg = model_map['OnEvents'](msg)
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 中间件
         if self.__event_context_middleware is not None:
             new_context = self.__event_context_middleware(context)

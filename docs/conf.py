@@ -22,7 +22,7 @@ copyright = '2020, wongxy'
 author = 'wongxy'
 
 # The full version, including alpha/beta/rc tags
-release = '2.2.1'
+release = '2.3.1'
 
 master_doc = 'index'
 # -- General configuration ---------------------------------------------------

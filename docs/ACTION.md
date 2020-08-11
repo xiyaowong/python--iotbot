@@ -23,7 +23,6 @@ send_per_minute_behavior:
 send_per_minute_callback:
 ------
 timeout:
-log_file_path:
 api_path:
 port:
 host:
