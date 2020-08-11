@@ -82,7 +82,8 @@ class IOTBOT:
                 logger.add(
                     './logs/{time}.log',
                     format='{time:YYYY-MM-DD HH:mm} {level}\t{message}',
-                    rotation='1 day'
+                    rotation='1 day',
+                    encoding='utf-8'
                 )
         else:
             logger.disable(__name__)
