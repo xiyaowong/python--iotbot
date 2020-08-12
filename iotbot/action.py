@@ -361,19 +361,9 @@ class Action:
 
     def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> dict:
         """获取群管理员列表"""
-        AdminList = []
-        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
-        while True:
-            LastUin = data['LastUin']
-            MemberList = data['MemberList']
-            for Admin in MemberList:
-                if Admin['GroupAdmin'] == 1:
-                    AdminList.append(Admin)
-            if LastUin == 0:
-                break
-            time.sleep(1.1)
-            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout,
-                                   **kwargs)
+        MemberList = self.get_group_user_list(groupid,timeout, **kwargs)
+        AdminList = [i for i in MemberList if i['GroupAdmin'] == 1]
+        del  MemberList
         return AdminList
 
     def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
@@ -421,6 +411,34 @@ class Action:
             pass
         return False
 
+    def get_balance(self) ->dict:
+        '''获取QQ钱包余额'''
+        return self.baseSender('GET', 'GetBalance', timeout=timeout, **kwargs)
+
+    def get_status(self,timeout=20) -> dict:
+        '''获取机器人状态'''
+        rep = requests.get('{self.__host}:{self.__port}/v1/ClusterInfo', timeout=timeout)
+        return rep.json()
+
+    def send_single_red_bag(self) -> dict:
+        '''发送群/好友红包'''
+        #data = {}
+        #return self.baseSender('POST', 'SendSingleRed', data, timeout, **kwargs)
+
+    def send_qzone_red_bag(self) -> dict:
+        '''发送QQ空间红包'''
+        #data = {}
+        #return self.baseSender('POST', 'SendQzoneRed', data, timeout, **kwargs)
+
+    def send_transfer(self) -> dict:
+        '''支付转账'''
+        #data = {}
+        #return self.baseSender('POST', 'Transfer', data, timeout, **kwargs)
+
+    def open_red_bag(self,OpenRedBag) ->dict:
+        '''打开红包 传入红包数据结构'''
+        return self.baseSender('POST', 'OpenRedBag', OpenRedBag, timeout, **kwargs)
+
     def add_friend(self, userID: int, groupID: int, content='加个好友!', AddFromSource=2004, timeout=20, **kwargs) -> dict:
         """添加好友"""
         data = {
@@ -463,9 +481,21 @@ class Action:
         except Exception:
             return {}
 
-    def deal_friend(self) -> dict:
+    def deal_friend(self,Action:int) -> dict:
         """处理好友请求"""
-        pass
+        # --Action 1 忽略 2 同意 3 拒绝
+        data = {
+            'Action':Action
+        }
+        return self.baseSender('POST', 'DealFriend', data, timeout, **kwargs)
+    
+    def deal_group(self,Action:int) ->dict:
+        '''处理群邀请'''
+        # --Action 14 忽略 1 同意 21 拒绝
+        data = {
+            'Action':Action
+        }
+        return self.baseSender('POST', 'AnswerInviteGroup', data, timeout, **kwargs)
 
     def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
         """开启全员禁言"""
