@@ -83,6 +83,9 @@ host:
 | like_2                 | 点赞                                              |
 | logout                 | 退出 qq                                           |
 | get_login_qrcode       | 获取登录二维码的 base64 编码                      |
+| get_friend_file        | 获取好友文件下载链接                              |
+| get_group_file         | 获取群文件下载链接                                |
+| set_group_announce     | 设置群公告                                        |
 
 ## 发送队列
 

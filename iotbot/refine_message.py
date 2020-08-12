@@ -209,6 +209,7 @@ class _GroupMsg(GroupMsg):
 
 class _VoiceGroupMsg(_GroupMsg):
     """群语音消息"""
+
     def __init__(self, ctx: GroupMsg):
         voice_data = json.loads(ctx.Content)
         self.VoiceUrl: str = voice_data['Url']
@@ -218,6 +219,7 @@ class _VoiceGroupMsg(_GroupMsg):
 
 class _PicGroupMsg(_GroupMsg):
     """群图片/表情包消息"""
+
     def __init__(self, ctx: GroupMsg):
         pic_data = json.loads(ctx.Content)
         self.GroupPic: List[dict] = pic_data['GroupPic']
@@ -232,6 +234,7 @@ class _AtGroupMsg(_GroupMsg):
 
 class _RedBagGroupMsg(_GroupMsg):
     """群红包消息"""
+
     def __init__(self, ctx: GroupMsg):
         redbag_info = ctx.RedBaginfo
         self.RedBag_Authkey: str = redbag_info.get('Authkey')
@@ -294,6 +297,7 @@ class _FriendMsg(FriendMsg):
 
 class _VoiceFriendMsg(_FriendMsg):
     """好友语音消息"""
+
     def __init__(self, ctx: FriendMsg):
         voice_data = json.loads(ctx.Content)
         self.VoiceUrl: str = voice_data['Url']
@@ -303,6 +307,7 @@ class _VoiceFriendMsg(_FriendMsg):
 
 class _PicFriendMsg(_FriendMsg):
     """好友图片/表情包消息"""
+
     def __init__(self, ctx: FriendMsg):
         pic_data = json.loads(ctx.Content)
         self.GroupPic: List[dict] = pic_data['FriendPic']
@@ -312,6 +317,7 @@ class _PicFriendMsg(_FriendMsg):
 
 class _RedBagFriendMsg(_FriendMsg):
     """好友红包消息"""
+
     def __init__(self, ctx: FriendMsg):
         redbag_info = ctx.RedBaginfo
         self.RedBag_Authkey: str = redbag_info.get('Authkey')
