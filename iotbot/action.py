@@ -376,21 +376,22 @@ class Action:
         del LastUin, MemberList
         return AdminList
 
-    def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
-        """获取群成员列表"""
+    def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> dict:
+        """获取群管理员列表"""
+        AdminList = []
         data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
-        #Count = data['Count']
-        #GroupUin = data['GroupUin']
-        LastUin = data['LastUin']
-        MemberList = data['MemberList']
-        while LastUin != 0:
-            time.sleep(1.1)
-            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
-            #Count += data['Count']
-            #GroupUin = data['GroupUin']
+        while True:
             LastUin = data['LastUin']
-            MemberList += data['MemberList']
-        return MemberList
+            MemberList = data['MemberList']
+            for Admin in MemberList:
+                if Admin['GroupAdmin'] == 1:
+                    AdminList.append(Admin)
+            if LastUin == 0:
+                break
+            time.sleep(1.1)
+            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout,
+                                   **kwargs)
+        return AdminList
 
     def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs) -> dict:
         """设置群成员头衔"""
