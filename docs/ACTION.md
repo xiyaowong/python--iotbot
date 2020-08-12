@@ -68,7 +68,7 @@ host:
 | search_group           | 搜索群组                                          |
 | get_user_info          | 获取用户信息                                      |
 | get_cookies            | 获取 cookies                                      |
-| get_group_list         | 获取 cookies                                      |
+| get_group_list         | 获取群聊列表                                      |
 | get_group_user_list    | 获取群成员列表                                    |
 | get_group_admin_list   | 获取群管理列表                                    |
 | set_unique_title       | 设置群成员头衔                                    |
