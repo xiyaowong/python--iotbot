@@ -447,9 +447,21 @@ class Action:
         }
         rep = requests.post(f'{self.__host}:{self.__port}/v1/Group/Announce?qq={self.qq}',data = data, timeout=timeout)
 
-    def deal_friend(self) -> dict:
+    def deal_friend(self,Action:int) -> dict:
         """处理好友请求"""
-        pass
+        # --Action 1 忽略 2 同意 3 拒绝
+        data = {
+            'Action':Action
+        }
+        return self.baseSender('POST', 'DealFriend', data, timeout, **kwargs)
+    
+    def deal_group(self,Action:int) ->dict:
+        '''处理群邀请'''
+        # --Action 14 忽略 1 同意 21 拒绝
+        data = {
+            'Action':Action
+        }
+        return self.baseSender('POST', 'AnswerInviteGroup', data, timeout, **kwargs)
 
     def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
         """开启全员禁言"""

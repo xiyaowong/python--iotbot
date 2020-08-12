@@ -54,9 +54,12 @@ action = Action(123456)
 | send_private_pic_msg   | 发送私聊图片                                      |
 | send_group_json_msg    | 发送群 Json 类型信息                              |
 | send_group_xml_msg     | 发送群 Xml 类型信息                               |
-| revoke_msg             | 撤回消息                                          |
-| search_group           | 搜索群组                                          |
-| get_user_info          | 获取用户信息                                      |
+| send_transfer          | 支付转账(暂时无法使用)                             |
+| send_qzone_red_bag     | 发送QQ空间红包(暂时无法使用)                        |
+| send_single_red_bag    | 发送群/好友红包(暂时无法使用)                       |
+| revoke_msg             | 撤回消息                                           |
+| search_group           | 搜索群组                                           |
+| get_status             | 获取机器人状态                                     |
 | get_cookies            | 获取 cookies                                      |
 | get_group_list         | 获取 cookies                                      |
 | get_group_user_list    | 获取群成员列表                                    |
@@ -66,6 +69,7 @@ action = Action(123456)
 | refresh_keys           | 刷新 key 二次登陆, 成功返回 True， 失败返回 False |
 | add_friend             | 添加好友                                          |
 | deal_friend            | 处理好友请求                                      |
+| deal_group             | 处理群邀请                                        |
 | all_shut_up_on         | 开启全员禁言                                      |
 | all_shut_up_off        | 关闭全员禁言                                      |
 | you_shut_up            | 群成员禁言                                        |
