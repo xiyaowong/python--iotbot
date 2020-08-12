@@ -361,19 +361,19 @@ class Action:
 
     def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> dict:
         """获取群管理员列表"""
-        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
-        LastUin = data['LastUin']
-        MemberList = data['MemberList']
         AdminList = []
-        while LastUin != 0:
-            time.sleep(1.1)
-            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
+        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
+        while True:
             LastUin = data['LastUin']
-            MemberList += data['MemberList']
-            AdminList = [i for i in MemberList if i['GroupAdmin'] != 0]
-            if len(AdminList) == 10:
+            MemberList = data['MemberList']
+            for Admin in MemberList:
+                if Admin['GroupAdmin'] == 1:
+                    AdminList.append(Admin)
+            if LastUin == 0:
                 break
-        del LastUin, MemberList
+            time.sleep(1.1)
+            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout,
+                                   **kwargs)
         return AdminList
 
     def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
