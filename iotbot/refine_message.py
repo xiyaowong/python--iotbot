@@ -83,6 +83,10 @@ class _GroupAdminsysnotifyEventMsg(_EventMsg):
     """加群申请"""
 
     def __init__(self, ctx: EventMsg):
+        self.UserID: int = ctx.EventData.get('Who')
+        self.UserName: int = ctx.EventData.get('WhoName')
+        self.Type: int = ctx.EventData.get('Type')
+        self.Content: int = ctx.EventData.get('Content')
         super()._carry_properties(ctx)
 
 
