@@ -17,6 +17,8 @@ from queue import deque
 from threading import Thread
 from typing import Any
 from typing import Callable
+from typing import Generator
+from typing import List
 from typing import Union
 
 import requests
@@ -359,30 +361,24 @@ class Action:
         """获取群组列表"""
         return self.baseSender('POST', 'GetGroupList', {"NextToken": ""}, timeout, **kwargs)
 
-    def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> dict:
+    def get_group_admin_list(self, groupid: int, timeout=5, **kwargs) -> List[dict]:
         """获取群管理员列表"""
-        MemberList = self.get_group_user_list(groupid,timeout, **kwargs)
-        AdminList = [i for i in MemberList if i['GroupAdmin'] == 1]
-        del  MemberList
-        return AdminList
+        members = self.get_group_user_list(groupid, timeout, **kwargs)
+        return [member for member in members if member['GroupAdmin'] == 1]
 
-    def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> dict:
+    def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> Generator[dict, None, None]:
         """获取群成员列表"""
-        data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": 0}, timeout, **kwargs)
-        #Count = data['Count']
-        #GroupUin = data['GroupUin']
-        LastUin = data['LastUin']
-        MemberList = data['MemberList']
-        while LastUin != 0:
-            time.sleep(1.1)
+        LastUin = 0
+        while True:
             data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
-            #Count += data['Count']
-            #GroupUin = data['GroupUin']
-            LastUin = data['LastUin']
-            MemberList += data['MemberList']
-        return MemberList
+            LastUin = data['LastUin']  # 上面请求失败会返回空字典。但是这里不处理错误, 必须正常抛出
+            for member in data['MemberList']:
+                yield member
+            if LastUin == 0:
+                break
+            time.sleep(0.8)
 
-    def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=1, **kwargs) -> dict:
+    def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=5, **kwargs) -> dict:
         """设置群成员头衔"""
         return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title}, timeout, **kwargs)
 
@@ -411,11 +407,11 @@ class Action:
             pass
         return False
 
-    def get_balance(self) ->dict:
+    def get_balance(self) -> dict:
         '''获取QQ钱包余额'''
-        return self.baseSender('GET', 'GetBalance', timeout=timeout, **kwargs)
+    #     return self.baseSender('GET', 'GetBalance', timeout=timeout, **kwargs)
 
-    def get_status(self,timeout=20) -> dict:
+    def get_status(self, timeout=20) -> dict:
         '''获取机器人状态'''
         rep = requests.get('{self.__host}:{self.__port}/v1/ClusterInfo', timeout=timeout)
         return rep.json()
@@ -423,21 +419,21 @@ class Action:
     def send_single_red_bag(self) -> dict:
         '''发送群/好友红包'''
         #data = {}
-        #return self.baseSender('POST', 'SendSingleRed', data, timeout, **kwargs)
+        # return self.baseSender('POST', 'SendSingleRed', data, timeout, **kwargs)
 
     def send_qzone_red_bag(self) -> dict:
         '''发送QQ空间红包'''
         #data = {}
-        #return self.baseSender('POST', 'SendQzoneRed', data, timeout, **kwargs)
+        # return self.baseSender('POST', 'SendQzoneRed', data, timeout, **kwargs)
 
     def send_transfer(self) -> dict:
         '''支付转账'''
         #data = {}
-        #return self.baseSender('POST', 'Transfer', data, timeout, **kwargs)
+        # return self.baseSender('POST', 'Transfer', data, timeout, **kwargs)
 
-    def open_red_bag(self,OpenRedBag) ->dict:
+    def open_red_bag(self, OpenRedBag) -> dict:
         '''打开红包 传入红包数据结构'''
-        return self.baseSender('POST', 'OpenRedBag', OpenRedBag, timeout, **kwargs)
+    #     return self.baseSender('POST', 'OpenRedBag', OpenRedBag, timeout, **kwargs)
 
     def add_friend(self, userID: int, groupID: int, content='加个好友!', AddFromSource=2004, timeout=20, **kwargs) -> dict:
         """添加好友"""
@@ -481,21 +477,21 @@ class Action:
         except Exception:
             return {}
 
-    def deal_friend(self,Action:int) -> dict:
+    def deal_friend(self, Action: int) -> dict:
         """处理好友请求"""
         # --Action 1 忽略 2 同意 3 拒绝
-        data = {
-            'Action':Action
-        }
-        return self.baseSender('POST', 'DealFriend', data, timeout, **kwargs)
-    
-    def deal_group(self,Action:int) ->dict:
+        # data = {
+        #     'Action':Action
+        # }
+        # return self.baseSender('POST', 'DealFriend', data, timeout, **kwargs)
+
+    def deal_group(self, Action: int) -> dict:
         '''处理群邀请'''
         # --Action 14 忽略 1 同意 21 拒绝
-        data = {
-            'Action':Action
-        }
-        return self.baseSender('POST', 'AnswerInviteGroup', data, timeout, **kwargs)
+        # data = {
+        #     'Action':Action
+        # }
+        # return self.baseSender('POST', 'AnswerInviteGroup', data, timeout, **kwargs)
 
     def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
         """开启全员禁言"""
