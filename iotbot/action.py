@@ -431,9 +431,37 @@ class Action:
         }
         return self.baseSender('POST', 'AddQQUser', data, timeout, **kwargs)
 
+    def get_friend_file(self,FileID: str, timeout=20, **kwargs) -> dict:
+        """获取好友文件下载链接"""
+        funcname = 'OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_DOWNLOAD-1200'
+        data = {
+            'FileID':FileID
+        }
+        return self.baseSender('POST', funcname , data, timeout, **kwargs)
+
+    def get_group_file(self,groupID: int,FileID: str, timeout=20, **kwargs) -> dict:
+        """获取群文件下载链接"""
+        funcname = 'OidbSvc.0x6d6_2'
+        data = {
+            'FileID':FileID,
+            'GroupID':groupID
+        }
+        return self.baseSender('POST', funcname , data, timeout, **kwargs)
+
+    def set_group_announce(self,groupID: int,Title:str, Text:str, Pinned = 0,Type = 10, timeout=20, **kwargs) -> dict:
+        """设置群公告"""
+        data = {
+            'GroupID':groupID,#发布的群号
+            "Title":Title,  #公告标题
+            "Text":Text,  #公告内容
+            "Pinned":Pinned, #1为置顶,0为普通公告
+            "Type":Type #发布类型(10为使用弹窗公告,20为发送给新成员,其他暂未知)
+        }
+        rep = requests.post(f'{self.__host}:{self.__port}/v1/Group/Announce?qq={self.qq}',data = data, timeout=timeout)
+
     def deal_friend(self) -> dict:
         """处理好友请求"""
-        # TODO
+        pass
 
     def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
         """开启全员禁言"""
