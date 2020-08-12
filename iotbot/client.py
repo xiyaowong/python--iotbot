@@ -1,5 +1,5 @@
 # pylint: disable = too-many-instance-attributes
-import logging
+import copy
 import sys
 import time
 from collections.abc import Sequence
@@ -9,9 +9,9 @@ from typing import List
 from typing import Union
 
 import socketio
+from loguru import logger
 
 from .config import config
-from .logger import Logger
 from .model import EventMsg
 from .model import FriendMsg
 from .model import GroupMsg
@@ -20,6 +20,13 @@ from .plugin import PluginManager
 from .typing import EventMsgReceiver
 from .typing import FriendMsgReceiver
 from .typing import GroupMsgReceiver
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    format='{level.icon} {time:YYYY-MM-DD HH:mm:ss} <lvl>{level}\t{message}</lvl>',
+    colorize=True
+)
 
 
 def _deco_creater(bind_type):
@@ -41,37 +48,45 @@ class IOTBOT:
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
     :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
     :param log: 是否开启日志
-    :param log_file_path: 日志文件路径
+    :param log_file: 是否文件日志
     :param port: 运行端口
     :param beat_delay: 心跳延时时间（s）
-    :param host: ip，需要包含协议
+    :param host: ip，需要包含schema
     """
 
     def __init__(self,
                  qq: Union[int, List[int]],
-                 use_plugins=False,
-                 plugin_dir='plugins',
-                 group_blacklist: list = None,
-                 friend_whitelist: list = None,
-                 log=True,
-                 log_file_path: str = None,
-                 port=8888,
-                 beat_delay=60,
-                 host='http://127.0.0.1'):
+                 use_plugins: bool = False,
+                 plugin_dir: str = 'plugins',
+                 group_blacklist: List[int] = None,
+                 friend_blacklist: List[int] = None,
+                 log: bool = True,
+                 log_file: bool = True,
+                 port: int = 8888,
+                 beat_delay: int = 60,
+                 host: str = 'http://127.0.0.1'):
         if isinstance(qq, Sequence):
-            self.qq = set(qq)
+            self.qq = list(qq)
         else:
             self.qq = [qq]
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
-        self.group_blacklist = set(group_blacklist or [])
-        self.friend_whitelist = set(friend_whitelist or [])
         self.host = config.host or host
         self.port = config.port or port
         self.beat_delay = beat_delay
-        self.logger = Logger(log_file_path)
-        if not log:
-            logging.disable()
+        self.group_blacklist = set(config.group_blacklist or group_blacklist or [])
+        self.friend_blacklist = set(config.friend_blacklist or friend_blacklist or [])
+
+        if log:
+            if log_file:
+                logger.add(
+                    './logs/{time}.log',
+                    format='{time:YYYY-MM-DD HH:mm} {level}\t{message}',
+                    rotation='1 day',
+                    encoding='utf-8'
+                )
+        else:
+            logger.disable(__name__)
 
         # 手动添加的消息接收函数
         self.__friend_msg_receivers_from_hand = []
@@ -97,6 +112,7 @@ class IOTBOT:
             self.plugMgr.load_plugins()
             print(self.plugMgr.info_table)
 
+        # 初始化各项配置
         self.__initialize_socketio()
         self.__refresh_executor()
         self.__initialize_handlers()
@@ -104,7 +120,7 @@ class IOTBOT:
     ########################################################################
     # shortcuts to call plugin manager methods
     ########################################################################
-    # 只推荐使用这几个方法，其他的需要通过 plugMgr 对象访问
+    # 只推荐使用这几个方法，其他的更细致的方法需要通过 plugMgr 对象访问
     def load_plugins(self):
         '''加载新插件'''
         self.plugMgr.load_plugins()
@@ -122,18 +138,19 @@ class IOTBOT:
         self.plugMgr.refresh()
         print(self.plugMgr.info_table)
 
+    @property
     def plugins(self):
         '''插件名列表'''
         return self.plugMgr.plugins
     ########################################################################
 
     def run(self):
-        self.logger.info('Connecting to the server...')
+        logger.info('Connecting to the server...')
 
         try:
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
-        except Exception as e:
-            self.logger.error(f'启动失败 -> {e}')
+        except Exception:
+            logger.exception('启动失败')
             sys.exit(1)
         else:
             try:
@@ -143,10 +160,11 @@ class IOTBOT:
                 sys.exit(0)
 
     def connect(self):
-        self.logger.info('Connected to server successfully!')
+        logger.success('Connected to server successfully!')
         while True:
             for qq in self.qq:
                 self.socketio.emit('GetWebConn', str(qq))
+                logger.info(f'Heartbeat -> {qq}')
             time.sleep(self.beat_delay)
 
     @property
@@ -163,7 +181,7 @@ class IOTBOT:
 
     @receivers.setter
     def receivers(self, _):
-        self.logger.warning('The attribute receivers is read-only!')
+        logger.warning('The attribute receivers is read-only!')
 
     def __initialize_socketio(self):
         self.socketio = socketio.Client()
@@ -201,21 +219,21 @@ class IOTBOT:
         for f_receiver in [*self.__friend_msg_receivers_from_hand,
                            *self.plugMgr.friend_msg_receivers]:
             (self.__executor
-             .submit(f_receiver, context)
+             .submit(f_receiver, copy.deepcopy(context))
              .add_done_callback(self.__thread_pool_callback))
 
     def __group_context_distributor(self, context: GroupMsg):
         for g_receiver in [*self.__group_msg_receivers_from_hand,
                            *self.plugMgr.group_msg_receivers]:
             (self.__executor
-             .submit(g_receiver, context)
+             .submit(g_receiver, copy.deepcopy(context))
              .add_done_callback(self.__thread_pool_callback))
 
     def __event_context_distributor(self, context: EventMsg):
         for e_receiver in [*self.__event_receivers_from_hand,
                            *self.plugMgr.event_receivers]:
             (self.__executor
-             .submit(e_receiver, context)
+             .submit(e_receiver, copy.deepcopy(context))
              .add_done_callback(self.__thread_pool_callback))
 
     ########################################################################
@@ -242,6 +260,7 @@ class IOTBOT:
     ########################################################################
     # message handler
     ########################################################################
+    @logger.catch
     def __thread_pool_callback(self, worker):
         worker_exception = worker.exception()
         if worker_exception:
@@ -249,30 +268,38 @@ class IOTBOT:
 
     def __friend_msg_handler(self, msg):
         context: FriendMsg = model_map['OnFriendMsgs'](msg)
-        # 白名单
-        if self.friend_whitelist:
-            if context.FromUin not in self.friend_whitelist:
-                return
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
+        # 黑名单
+        if context.FromUin in self.friend_blacklist:
+            return
         # 中间件
         if self.__friend_context_middleware is not None:
-            context = self.__friend_context_middleware(context)
+            new_context = self.__friend_context_middleware(context)
+            if isinstance(new_context, type(context)):
+                context = new_context
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
         context: GroupMsg = model_map['OnGroupMsgs'](msg)
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
         if context.FromGroupId in self.group_blacklist:
             return
         # 中间件
         if self.__group_context_middleware is not None:
-            context = self.__group_context_middleware(context)
+            new_context = self.__group_context_middleware(context)
+            if isinstance(new_context, type(context)):
+                context = new_context
         self.__executor.submit(self.__group_context_distributor, context)
 
     def __event_msg_handler(self, msg):
         context: EventMsg = model_map['OnEvents'](msg)
+        logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 中间件
         if self.__event_context_middleware is not None:
-            context = self.__event_context_middleware(context)
+            new_context = self.__event_context_middleware(context)
+            if isinstance(new_context, type(context)):
+                context = new_context
         self.__executor.submit(self.__event_context_distributor, context)
 
     def __initialize_handlers(self):
@@ -280,7 +307,7 @@ class IOTBOT:
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
         self.socketio.on('OnEvents')(self.__event_msg_handler)
     ###########################################################################
-
+    # decorators
     on_group_msg = _deco_creater('OnGroupMsgs')
     on_friend_msg = _deco_creater('OnFriendMsgs')
     on_event = _deco_creater('OnEvents')

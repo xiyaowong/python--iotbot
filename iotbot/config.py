@@ -1,7 +1,12 @@
-import json
 import re
+from typing import List
 
 from .exceptions import InvalidConfigError
+
+try:
+    import ujson as json
+except Exception:
+    import json
 
 
 def _check_schema(url: str) -> str:
@@ -23,6 +28,9 @@ class _config:
             self.port = int(c.get('port'))
         except Exception:
             self.port = None
+
+        self.group_blacklist: List[int] = c.get('group_blacklist')  # 群黑名单
+        self.friend_blacklist: List[int] = c.get('friend_blacklist')  # 好友黑名单
 
         # webhook 相关配置
         self.webhook = bool(c.get('webhook'))

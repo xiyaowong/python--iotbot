@@ -8,20 +8,35 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 不过发送去的操作是能正常完成的。
 """
 import functools
-import json
+import re
+import sys
 import time
 import traceback
 from queue import Queue
 from queue import deque
 from threading import Thread
+from typing import Any
 from typing import Callable
+from typing import Union
 
 import requests
+from loguru import logger
 from requests.exceptions import Timeout
 
 from .client import IOTBOT
 from .config import config
-from .logger import Logger
+
+try:
+    import ujson as json
+except Exception:
+    import json
+
+logger.remove()
+logger.add(
+    sys.stdout,
+    format='{level.icon} {time:YYYY-MM-DD HH:mm:ss} <lvl>{level}\t{message}</lvl>',
+    colorize=True
+)
 
 WAIT_THEN_RUN = 1  # 延时一段时间，然后继续发送
 STOP_AND_DISCARD = 2  # 停止发送，删除剩余任务
@@ -37,25 +52,23 @@ class Action:
     :param send_per_minute_behavior: 与参数`send_per_minute`相关联, 指定每分钟发送量达到
                                     限定值后，对剩余发送任务的处理方式
     :param send_per_minute_callback: 当达到每分钟限制后调用的函数，接收参数为一个`元组`(剩余时间, 剩余任务数)
-    :param timeout: 等待IOTBOT响应时间，不是发送请求的延时
-    :param log_file_path: 日志文件路径
+    :param timeout: 等待IOTBOT响应时间和发送请求的延时
     :param api_path: 方法路径
     :param port: 端口
     :param host: ip
     '''
 
     def __init__(self,
-                 qq_or_bot=None,
-                 queue=False,
-                 queue_delay=1.1,
+                 qq_or_bot: Union[int, IOTBOT] = None,
+                 queue: bool = False,
+                 queue_delay: Union[int, float] = 1.1,
                  send_per_minute: int = None,
-                 send_per_minute_behavior=WAIT_THEN_RUN,
-                 send_per_minute_callback=None,
-                 timeout=15,
-                 log_file_path=None,
-                 api_path='/v1/LuaApiCaller',
-                 port=8888,
-                 host='http://127.0.0.1'):
+                 send_per_minute_behavior: int = WAIT_THEN_RUN,
+                 send_per_minute_callback: Callable[[int, int], Any] = None,
+                 timeout: int = 15,
+                 api_path: str = '/v1/LuaApiCaller',
+                 port: int = 8888,
+                 host: str = 'http://127.0.0.1'):
         self.__timeout = timeout
         self.__api_path = api_path
         self.__port = config.port or port
@@ -64,7 +77,6 @@ class Action:
             self.bind_bot(qq_or_bot)
         else:
             self.qq = int(qq_or_bot)
-        self.logger = Logger(log_file_path)
 
         # 初始化用来控制每分钟的发送频率的相关配置
         if queue and send_per_minute is not None:
@@ -139,7 +151,7 @@ class Action:
                             #     print('延时然后继续运行...')
                             #     time.sleep(should_limited_time)
             except Exception:
-                self.logger.warning(f'出错了，我帮你处理了 -> {traceback.format_exc()}')
+                logger.exception('发送线程内任务出错')
             finally:
                 self.__last_send_time = time.time()
                 # print(f'上次运行时间：{self.__last_send_time}')
@@ -437,33 +449,37 @@ class Action:
         }
         return self.baseSender('POST', 'AddQQUser', data, timeout, **kwargs)
 
-    def get_friend_file(self,FileID: str, timeout=20, **kwargs) -> dict:
+    def get_friend_file(self, FileID: str, timeout=20, **kwargs) -> dict:
         """获取好友文件下载链接"""
         funcname = 'OfflineFilleHandleSvr.pb_ftn_CMD_REQ_APPLY_DOWNLOAD-1200'
         data = {
-            'FileID':FileID
+            'FileID': FileID
         }
-        return self.baseSender('POST', funcname , data, timeout, **kwargs)
+        return self.baseSender('POST', funcname, data, timeout, **kwargs)
 
-    def get_group_file(self,groupID: int,FileID: str, timeout=20, **kwargs) -> dict:
+    def get_group_file(self, groupID: int, FileID: str, timeout=20, **kwargs) -> dict:
         """获取群文件下载链接"""
         funcname = 'OidbSvc.0x6d6_2'
         data = {
-            'FileID':FileID,
-            'GroupID':groupID
+            'FileID': FileID,
+            'GroupID': groupID
         }
-        return self.baseSender('POST', funcname , data, timeout, **kwargs)
+        return self.baseSender('POST', funcname, data, timeout, **kwargs)
 
-    def set_group_announce(self,groupID: int,Title:str, Text:str, Pinned = 0,Type = 10, timeout=20, **kwargs) -> dict:
+    def set_group_announce(self, groupID: int, Title: str, Text: str, Pinned=0, Type=10, timeout=5, **kwargs) -> dict:
         """设置群公告"""
         data = {
-            'GroupID':groupID,#发布的群号
-            "Title":Title,  #公告标题
-            "Text":Text,  #公告内容
-            "Pinned":Pinned, #1为置顶,0为普通公告
-            "Type":Type #发布类型(10为使用弹窗公告,20为发送给新成员,其他暂未知)
+            'GroupID': groupID,  # 发布的群号
+            "Title": Title,  # 公告标题
+            "Text": Text,  # 公告内容
+            "Pinned": Pinned,  # 1为置顶,0为普通公告
+            "Type": Type  # 发布类型(10为使用弹窗公告,20为发送给新成员,其他暂未知)
         }
-        rep = requests.post(f'{self.__host}:{self.__port}/v1/Group/Announce?qq={self.qq}',data = data, timeout=timeout)
+        try:
+            res = requests.post(f'{self.__host}:{self.__port}/v1/Group/Announce?qq={self.qq}', data=data, timeout=timeout, **kwargs)
+            return res.json()
+        except Exception:
+            return {}
 
     def deal_friend(self,Action:int) -> dict:
         """处理好友请求"""
@@ -501,6 +517,26 @@ class Action:
         """测试赞(这里的测试只是与webapi描述一致)"""
         return self.baseSender('POST', 'QQZan', {"UserID": userid}, timeout, **kwargs)
 
+    def logout(self, flag=False, timeout=5, **kwargs) -> bool:
+        '''退出QQ
+        :param flag:是否删除设备信息文件
+        '''
+        return self.baseSender('POST', 'LogOut', {"Flag": flag}, timeout, **kwargs)
+
+    def get_login_qrcode(self) -> str:
+        '''返回登录二维码的base64'''
+        try:
+            resp = requests.get(
+                '{}:{}/v1/Login/GetQRcode'.format(self.__host, self.__port), timeout=10)
+        except Exception as e:
+            logger.error('http请求错误 %s' % str(e))
+        else:
+            try:
+                return re.findall(r'"data:image/png;base64,(.*?)"', resp.text)[0]
+            except IndexError:
+                logger.error('base64获取失败')
+        return ''
+
     def baseSender(self,
                    method: str,
                    funcname: str,
@@ -508,7 +544,7 @@ class Action:
                    timeout: int = None,
                    api_path: str = None,
                    iot_timeout: int = None,
-                   bot_qq: int = None) -> dict:
+                   bot_qq: int = None) -> Union[dict, bool]:
         """
         :param method: 请求方法
         :param funcname: 请求类型
@@ -549,7 +585,7 @@ class Action:
                     timeout: int = None,
                     api_path: str = None,
                     iot_timeout: int = None,
-                    bot_qq: int = None) -> dict:
+                    bot_qq: int = None) -> Union[dict, bool]:
         params = {
             'funcname': funcname,
             'timeout': iot_timeout or self.__timeout,
@@ -574,15 +610,15 @@ class Action:
                 if 'Ret' in response:
                     if response['Ret'] != 0:
                         if response['Ret'] == 241:
-                            self.logger.error(f'请求频繁: {response}')
+                            logger.error(f'请求频繁: {response}')
                         else:
-                            self.logger.error(f'请求发送成功, 但处理失败: {response}')
+                            logger.error(f'请求发送成功, 但处理失败: {response}')
             else:
-                self.logger.error(f'*****不是预期的Http响应码: {rep.status_code}*****')
+                logger.error(f'*****不是预期的Http响应码: {rep.status_code}*****')
             return response
         except Exception as e:
             if isinstance(e, Timeout):
-                self.logger.warning('响应超时，但不代表处理未成功, 结果未知!')
+                logger.warning('响应超时，但不代表处理未成功, 结果未知!')
             else:
-                self.logger.error(f'出现错误: {traceback.format_exc()}')
+                logger.error(f'出现错误: {traceback.format_exc()}')
             return {}

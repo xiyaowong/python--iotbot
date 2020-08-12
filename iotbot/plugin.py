@@ -43,6 +43,7 @@ class PluginManager:
         '''reload all plugins'''
         self._plugins.clear()
         self.load_plugins(plugin_dir)
+        self.reload_plugins(plugin_dir)
 
     def reload_plugins(self, plugin_dir: str = None) -> None:
         '''reload old, load new.'''
@@ -116,13 +117,12 @@ class PluginManager:
         ])
         table.add_row([
             'Group  Msg Receiver',
-            len(self._plugins),
+            len(self.group_msg_receivers),
             ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_group_msg])
         ])
         table.add_row([
             'Event      Receiver',
-            len(self._plugins),
+            len(self.event_receivers),
             ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_events])
         ])
-
         return str(table)
