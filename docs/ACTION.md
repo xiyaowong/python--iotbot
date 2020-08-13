@@ -86,6 +86,8 @@ host:
 | get_friend_file        | 获取好友文件下载链接                              |
 | get_group_file         | 获取群文件下载链接                                |
 | set_group_announce     | 设置群公告                                        |
+| set_group_admin        | 设置群管理员                                      |
+| cancel_group_admin     | 取消群管理员                                      |
 
 ## 发送队列
 

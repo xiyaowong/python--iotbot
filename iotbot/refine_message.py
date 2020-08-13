@@ -84,13 +84,22 @@ class _FriendDeleteEventMsg(_EventMsg):
 
 
 class _GroupAdminsysnotifyEventMsg(_EventMsg):
-    """加群申请"""
+    """QQ群系统消息通知(加群申请在这里面"""
 
     def __init__(self, ctx: EventMsg):
-        self.UserID: int = ctx.EventData.get('Who')
-        self.UserName: int = ctx.EventData.get('WhoName')
-        self.Type: int = ctx.EventData.get('Type')
-        self.Content: int = ctx.EventData.get('Content')
+        edata = ctx.EventData
+        self.Type: int = edata.get('Type')  # 事件类型
+        self.MsgTypeStr: str = edata.get('MsgTypeStr')  # 消息类型
+        self.MsgStatusStr: str = edata.get('MsgStatusStr')  # 消息类型状态
+        self.Who: int = edata.get('Who')  # 触发消息的对象
+        self.WhoName: int = edata.get('WhoName')  # 触发消息的对象昵称
+        self.GroupID: int = edata.get('GroupId')  # 来自群
+        self.GroupName: str = edata.get('GroupName')  # 群名
+        self.ActionUin: int = edata.get('ActionUin')  # 邀请人(处理人)
+        self.ActionName: str = edata.get('ActionName')  # 邀请人(处理人)昵称
+        self.ActionGroupCard: str = edata.get('ActionGroupCard')  # 邀请人(处理人)群名片
+        self.Action: str = edata.get('Action')  # 加群理由 11 agree 14 忽略 12/21 disagree
+        self.Content: int = edata.get('Content')
         super()._carry_properties(ctx)
 
 

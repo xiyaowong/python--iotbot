@@ -49,3 +49,10 @@
 
 ### 2.3.2
 1. windows上编码错误
+
+### 2.3.4
+1. 新增设置/取消管理员Action
+2. Action对象的host,port...等属性改为公开属性
+3. 发送请求使用session
+4. GroupAdminsysnotifyEventMsgQQ群系统消息通知消息完善
+...

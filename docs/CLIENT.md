@@ -89,22 +89,22 @@ from iotbot.refine_message import *
 
 ### 一览
 
-| 名称                                  | 作用                |
-| ------------------------------------- | ------------------- |
-| refine_group_revoke_event_msg         | 群成员撤回消息事件  |
-| refine_group_exit_event_msg           | 群成员退出群聊事件  |
-| refine_group_join_event_msg           | 某人进群事件        |
-| refine_friend_revoke_event_msg        | 好友撤回消息事件    |
-| refine_friend_delete_event_msg        | 删除好友事件        |
-| refine_group_adminsysnotify_event_msg | 加群申请            |
-| refine_group_shut_event_msg           | 群禁言事件          |
-| refine_group_admin_event_msg          | 管理员变更事件      |
-| refine_voice_group_msg                | 群语音消息          |
-| refine_pic_group_msg                  | 群图片/表情包消息   |
-| refine_RedBag_group_msg               | 群红包消息          |
-| refine_voice_friend_msg               | 好友语音消息        |
-| refine_pic_friend_msg                 | 好友图片/表情包消息 |
-| refine_RedBag_friend_msg              | 好友红包消息        |
+| 名称                                  | 作用                                |
+| ------------------------------------- | ----------------------------------- |
+| refine_group_revoke_event_msg         | 群成员撤回消息事件                  |
+| refine_group_exit_event_msg           | 群成员退出群聊事件                  |
+| refine_group_join_event_msg           | 某人进群事件                        |
+| refine_friend_revoke_event_msg        | 好友撤回消息事件                    |
+| refine_friend_delete_event_msg        | 删除好友事件                        |
+| refine_group_adminsysnotify_event_msg | QQ 群系统消息通知(加群申请在这里面) |
+| refine_group_shut_event_msg           | 群禁言事件                          |
+| refine_group_admin_event_msg          | 管理员变更事件                      |
+| refine_voice_group_msg                | 群语音消息                          |
+| refine_pic_group_msg                  | 群图片/表情包消息                   |
+| refine_RedBag_group_msg               | 群红包消息                          |
+| refine_voice_friend_msg               | 好友语音消息                        |
+| refine_pic_friend_msg                 | 好友图片/表情包消息                 |
+| refine_RedBag_friend_msg              | 好友红包消息                        |
 
 ## 客户端属性或方法
 

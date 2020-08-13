@@ -71,14 +71,16 @@ class Action:
                  api_path: str = '/v1/LuaApiCaller',
                  port: int = 8888,
                  host: str = 'http://127.0.0.1'):
-        self.__timeout = timeout
-        self.__api_path = api_path
-        self.__port = config.port or port
-        self.__host = config.host or host
+        self.timeout = timeout
+        self.api_path = api_path
+        self.port = config.port or port
+        self.host = config.host or host
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:
             self.qq = int(qq_or_bot)
+
+        self.s = requests.Session()
 
         # 初始化用来控制每分钟的发送频率的相关配置
         if queue and send_per_minute is not None:
@@ -161,8 +163,8 @@ class Action:
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
         self.qq = bot.qq[0]
-        self.__port = bot.port
-        self.__host = bot.host
+        self.port = bot.port
+        self.host = bot.host
 
     def send_friend_text_msg(self, toUser: int, content: str, timeout=5, **kwargs) -> dict:
         """发送好友文本消息"""
@@ -267,7 +269,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_text_msg(self, toUser: int, content: str, groupid: int, timeout=5, **kwargs) -> dict:
+    def send_private_text_msg(self, toUser: int, content: str, groupid: int,
+                              timeout=5, **kwargs) -> dict:
         """发送私聊文字消息"""
         data = {
             "toUser": toUser,
@@ -279,7 +282,8 @@ class Action:
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf='', timeout=5, **kwargs) -> dict:
+    def send_private_voice_msg(self, toUser: int, groupid, voiceUrl='', voiceBase64Buf='',
+                               timeout=5, **kwargs) -> dict:
         """发送私聊语音"""
         data = {
             "toUser": toUser,
@@ -347,11 +351,13 @@ class Action:
 
     def search_group(self, content, page=0, timeout=5, **kwargs) -> dict:
         """搜索群组"""
-        return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page}, timeout, **kwargs)
+        return self.baseSender('POST', 'SearchGroup', {"Content": content, "Page": page},
+                               timeout, **kwargs)
 
     def get_user_info(self, userID: int, timeout=5, **kwargs) -> dict:
         '''获取用户信息'''
-        return self.baseSender('POST', 'GetUserInfo', {'UserID': userID, 'GroupID': 0}, timeout, **kwargs)
+        return self.baseSender('POST', 'GetUserInfo', {'UserID': userID, 'GroupID': 0},
+                               timeout, **kwargs)
 
     def get_cookies(self, timeout=2, **kwargs) -> dict:
         """获取cookies"""
@@ -370,7 +376,8 @@ class Action:
         """获取群成员列表"""
         LastUin = 0
         while True:
-            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin}, timeout, **kwargs)
+            data = self.baseSender('POST', 'GetGroupUserList', {"GroupUin": groupid, "LastUin": LastUin},
+                                   timeout, **kwargs)
             LastUin = data['LastUin']  # 上面请求失败会返回空字典。但是这里不处理错误, 必须正常抛出
             for member in data['MemberList']:
                 yield member
@@ -380,7 +387,9 @@ class Action:
 
     def set_unique_title(self, groupid: int, userid: int, Title: str, timeout=5, **kwargs) -> dict:
         """设置群成员头衔"""
-        return self.baseSender('POST', 'OidbSvc.0x8fc_2', {"GroupID": groupid, "UserID": userid, "NewTitle": Title}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x8fc_2',
+                               {"GroupID": groupid, "UserID": userid, "NewTitle": Title},
+                               timeout, **kwargs)
 
     def modify_group_card(self, userID: int, groupID: int, newNick: str, timeout=5, **kwargs) -> dict:
         '''修改群名片
@@ -400,7 +409,7 @@ class Action:
     def refresh_keys(self, timeout=20) -> bool:
         '''刷新key二次登陆, 成功返回True， 失败返回False'''
         try:
-            rep = requests.get(f'{self.__host}:{self.__port}/v1/RefreshKeys?qq={self.qq}', timeout=timeout)
+            rep = self.s.get(f'{self.host}:{self.port}/v1/RefreshKeys?qq={self.qq}', timeout=timeout)
             if rep.json()['Ret'] == 'ok':
                 return True
         except Exception:
@@ -413,7 +422,7 @@ class Action:
 
     def get_status(self, timeout=20) -> dict:
         '''获取机器人状态'''
-        rep = requests.get('{self.__host}:{self.__port}/v1/ClusterInfo', timeout=timeout)
+        rep = self.s.get('{self.host}:{self.port}/v1/ClusterInfo', timeout=timeout)
         return rep.json()
 
     def send_single_red_bag(self) -> dict:
@@ -472,7 +481,8 @@ class Action:
             "Type": Type  # 发布类型(10为使用弹窗公告,20为发送给新成员,其他暂未知)
         }
         try:
-            res = requests.post(f'{self.__host}:{self.__port}/v1/Group/Announce?qq={self.qq}', data=data, timeout=timeout, **kwargs)
+            res = self.s.post(f'{self.host}:{self.port}/v1/Group/Announce?qq={self.qq}', data=data,
+                              timeout=timeout, **kwargs)
             return res.json()
         except Exception:
             return {}
@@ -495,15 +505,19 @@ class Action:
 
     def all_shut_up_on(self, groupid, timeout=20, **kwargs) -> dict:
         """开启全员禁言"""
-        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 1}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 1},
+                               timeout, **kwargs)
 
     def all_shut_up_off(self, groupid, timeout=20, **kwargs) -> dict:
         """关闭全员禁言"""
-        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 0}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x89a_0', {"GroupID": groupid, "Switch": 0},
+                               timeout, **kwargs)
 
     def you_shut_up(self, groupid, userid, shut_time=0, timeout=20, **kwargs) -> dict:
         """群成员禁言"""
-        return self.baseSender('POST', 'OidbSvc.0x570_8', {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time}, timeout, **kwargs)
+        return self.baseSender('POST', 'OidbSvc.0x570_8',
+                               {"GroupID": groupid, "ShutUpUserID": userid, "ShutTime": shut_time},
+                               timeout, **kwargs)
 
     def like(self, userid: int, timeout=10, **kwargs) -> dict:
         """通用点赞"""
@@ -519,11 +533,23 @@ class Action:
         '''
         return self.baseSender('POST', 'LogOut', {"Flag": flag}, timeout, **kwargs)
 
+    def set_group_admin(self, groupID: int, userID: int, timeout=10, **kwargs) -> dict:
+        '''设置群管理员'''
+        return self.baseSender('POST', 'OidbSvc.0x55c_1',
+                               {"GroupID": groupID, "UserID": userID, "Flag": 1},
+                               timeout, **kwargs)
+
+    def cancel_group_admin(self, groupID: int, userID: int, timeout=10, **kwargs) -> dict:
+        '''取消群管理员'''
+        return self.baseSender('POST', 'OidbSvc.0x55c_1',
+                               {"GroupID": groupID, "UserID": userID, "Flag": 0},
+                               timeout, **kwargs)
+
     def get_login_qrcode(self) -> str:
         '''返回登录二维码的base64'''
         try:
-            resp = requests.get(
-                '{}:{}/v1/Login/GetQRcode'.format(self.__host, self.__port), timeout=10)
+            resp = self.s.get(
+                '{}:{}/v1/Login/GetQRcode'.format(self.host, self.port), timeout=10)
         except Exception as e:
             logger.error('http请求错误 %s' % str(e))
         else:
@@ -584,19 +610,19 @@ class Action:
                     bot_qq: int = None) -> Union[dict, bool]:
         params = {
             'funcname': funcname,
-            'timeout': iot_timeout or self.__timeout,
+            'timeout': iot_timeout or self.timeout,
             'qq': bot_qq or self.qq
         }
         if data is None:
             data = {}
         try:
-            rep = requests.request(
+            rep = self.s.request(
                 method=method,
-                url='{}:{}{}'.format(self.__host, self.__port, api_path or self.__api_path),
+                url='{}:{}{}'.format(self.host, self.port, api_path or self.api_path),
                 headers={'Content-Type': 'application/json'},
                 params=params,
                 json=data,
-                timeout=timeout or self.__timeout
+                timeout=timeout or self.timeout
             )
             response = {}
             if rep.status_code == 200:
