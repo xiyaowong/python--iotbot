@@ -1,4 +1,3 @@
-# pylint: disable = too-many-instance-attributes
 import copy
 import sys
 import time
@@ -9,9 +8,9 @@ from typing import List
 from typing import Union
 
 import socketio
-from loguru import logger
 
 from .config import config
+from .logger import logger
 from .model import EventMsg
 from .model import FriendMsg
 from .model import GroupMsg
@@ -20,13 +19,6 @@ from .plugin import PluginManager
 from .typing import EventMsgReceiver
 from .typing import FriendMsgReceiver
 from .typing import GroupMsgReceiver
-
-logger.remove()
-logger.add(
-    sys.stdout,
-    format='{level.icon} {time:YYYY-MM-DD HH:mm:ss} <lvl>{level}\t{message}</lvl>',
-    colorize=True
-)
 
 
 def _deco_creater(bind_type):
@@ -40,7 +32,7 @@ def _deco_creater(bind_type):
     return deco
 
 
-class IOTBOT:
+class IOTBOT:  # pylint: disable = too-many-instance-attributes
     """
     :param qq: 机器人QQ号(多Q就传qq号列表)
     :param use_plugins: 是否开启插件功能
@@ -95,7 +87,7 @@ class IOTBOT:
 
         # webhook 里的消息接收函数，是特例
         if config.webhook:
-            from . import webhook
+            from . import webhook  # pylint:disable=import-outside-toplevel
             # 直接加载进 `hand`
             self.__friend_msg_receivers_from_hand.append(webhook.receive_friend_msg)
             self.__group_msg_receivers_from_hand.append(webhook.receive_group_msg)
@@ -112,7 +104,7 @@ class IOTBOT:
             self.plugMgr.load_plugins()
             print(self.plugMgr.info_table)
 
-        # 初始化各项配置
+        # 依次各种初始化
         self.__initialize_socketio()
         self.__refresh_executor()
         self.__initialize_handlers()

@@ -1,3 +1,6 @@
+import re
+
+
 class MsgTypes:
     """消息类型"""
     AtMsg = 'AtMsg'
@@ -161,3 +164,10 @@ class Emoticons:
     钻戒 = '[表情165]'
     左哼哼 = '[表情102]'
     左太极 = '[表情133]'
+
+
+def check_schema(url: str) -> str:
+    url = url.strip('/')
+    if not re.findall(r'(http://|https://)', url):
+        return "http://" + url
+    return url

@@ -18,9 +18,6 @@ qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，
 与发送队列有关的参数:
 queue:
 queue_delay:
-send_per_minute:
-send_per_minute_behavior:
-send_per_minute_callback:
 ------
 timeout:
 api_path:
@@ -99,11 +96,17 @@ host:
 
 **注意**:
 
-1. 开启队列后方法都没有返回值，所以只适合执行发送任务
+1. 开启队列后方法都没有返回值，所以只适合执行发送任务。
+
+(v2.4.0 增加)在使用开启队列的 action 运行各种方法时，可指定关键字参数`callback`,
+callback 要求为一个函数，函数有且只能有一个参数，之后会自动将队列中任务的返回值传说 callback 执行
+
+没有对不同的群和 api 进行分开发送，即所有操作都会排入队列中, 这样也符合真人行为(个人觉得)
+
 2. Action 必须定义为**全局变量**，不能放在接收函数内
    参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
 
-### 发送限额(每分钟)
+### ~~发送限额(每分钟)~~, 该功能已废弃
 
 可以设置每分钟允许最多发送多少条消息，因此只在**开启队列**后才有效
 参数：

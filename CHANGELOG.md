@@ -2,57 +2,72 @@
 
 ### 0.2.3 - 2020-05-15
 
-1. 更多action
+1. 更多 action
 
-2. 每个action除默认参数外，还可设置:
-	- `api_path` `default=/v1/LuaApiCaller`
-	- `iot_timeout`  `default=self.timeout=10` IOTBOT端处理允许等待的时间
-    - `bot_qq`  `default=self.qq` 机器人QQ号
+2. 每个 action 除默认参数外，还可设置:
+   - `api_path` `default=/v1/LuaApiCaller`
+   - `iot_timeout` `default=self.timeout=10` IOTBOT 端处理允许等待的时间
+   - `bot_qq` `default=self.qq` 机器人 QQ 号
 
 ### 1.0.0 - 2020-05-28
 
 #### 大改动
+
 1. 插件化
 2. 效率更高，不漏消息
 3. 更多快捷方法
 4. 更多自定义参数
 
 ### 1.1.0 - 2020-06-19
+
 1. 无需重启即可更新插件，正常调用`refresh_plugins`方法即可
 2. 改了下刷新插件后的显示信息
-3. 增加刷新key二次登陆Action
+3. 增加刷新 key 二次登陆 Action
 4. 改善了生成模板
 
 ### 2.0.0
+
 1. 支持队列发送
 2. 支持中间件，可用于传递配置
 3. 优化数据解析，提供解析更详细的函数
 4. ...
 
 ### 2.1.0
-1. 增加webhook功能，方便做远程服务
+
+1. 增加 webhook 功能，方便做远程服务
 2. 废弃环境变量的配置方式，使用`.iotbot.json`进行配置
-3. sugar发送图片函数增加文字参数
+3. sugar 发送图片函数增加文字参数
 
 ### 2.2.0
+
 1. 优化插件管理
 
 ### 2.2.1
+
 1. 优化中间件的处理
-3. 好友白名单改为好友黑名单
-2. 配置文件增加群、好友黑名单配置项
-3. Action增加部分方法
+2. 好友白名单改为好友黑名单
+3. 配置文件增加群、好友黑名单配置项
+4. Action 增加部分方法
 
 ### 2.3.1
-1. 使用第三方库替代原来手动配置的logger，日志不那么粗糙了
-2. 移除Action中的设置日志参数
+
+1. 使用第三方库替代原来手动配置的 logger，日志不那么粗糙了
+2. 移除 Action 中的设置日志参数
 
 ### 2.3.2
-1. windows上编码错误
+
+1. windows 上编码错误
 
 ### 2.3.4
-1. 新增设置/取消管理员Action
-2. Action对象的host,port...等属性改为公开属性
-3. 发送请求使用session
-4. GroupAdminsysnotifyEventMsgQQ群系统消息通知消息完善
-...
+
+1. 新增设置/取消管理员 Action
+2. Action 对象的 host,port...等属性改为公开属性
+3. 发送请求使用 session
+4. GroupAdminsysnotifyEventMsgQQ 群系统消息通知消息完善
+   ...
+
+### 2.4.0
+
+1. 移除 Action 每分钟限制发送频率的功能
+2. 优化发送队列
+

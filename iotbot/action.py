@@ -8,52 +8,93 @@ Tips: 如果开启队列，请将`action`定义为全局变量!,最重要的一�
 不过发送去的操作是能正常完成的。
 """
 import functools
+import queue
 import re
-import sys
+import threading
 import time
 import traceback
-from queue import Queue
-from queue import deque
-from threading import Thread
-from typing import Any
 from typing import Callable
 from typing import Generator
 from typing import List
 from typing import Union
 
 import requests
-from loguru import logger
 from requests.exceptions import Timeout
 
 from .client import IOTBOT
 from .config import config
+from .logger import logger
 
 try:
     import ujson as json
 except Exception:
     import json
 
-logger.remove()
-logger.add(
-    sys.stdout,
-    format='{level.icon} {time:YYYY-MM-DD HH:mm:ss} <lvl>{level}\t{message}</lvl>',
-    colorize=True
-)
 
-WAIT_THEN_RUN = 1  # 延时一段时间，然后继续发送
-STOP_AND_DISCARD = 2  # 停止发送，删除剩余任务
+class _Task:
+    def __init__(self,
+                 target: Callable,
+                 args: tuple = None,
+                 callback: Callable = None):
+        args = args or tuple()
+        self.target = functools.partial(target, *args)
+        functools.update_wrapper(self.target, target)
+        self.callback = callback
 
 
-class Action:
+class _SendThread(threading.Thread):
+    def __init__(self, delay=1.1):
+        super().__init__()
+        self.tasks = queue.Queue(maxsize=-1)
+        self.running = False
+        self.delay = delay
+        self.last_send_time = time.time()
+
+    def run(self):
+        self.running = True
+        while True:
+            try:
+                # 因为重载(importlib.relaod)之后，线程仍会在后台运行
+                # 暂时使用超时跳出线程
+                # 线程停了之后，被重载后，是不是会被gc??? 0.o
+                task: _Task = self.tasks.get(timeout=30 * 60)  # 30min
+            except queue.Empty:
+                self.running = False
+                break
+            else:
+                should_wait = self.delay - (time.time() - self.last_send_time)
+                if should_wait > 0:
+                    time.sleep(should_wait)
+                try:
+                    ret = task.target()
+                    if task.callback is not None:
+                        task.callback(ret)
+                except Exception:
+                    logger.exception('Action发送线程出错')
+                finally:
+                    self.last_send_time = time.time()
+
+    def start(self):
+        # 强改内部方法以允许重复执行start方法, 暂时不知道这样做有什么后果
+        if not self.running:
+            self._started.is_set = lambda: False
+        else:
+            self._started.is_set = lambda: True
+        super().start()
+
+    def put_task(self, task: _Task):
+        assert isinstance(task, _Task)
+        self.tasks.put(task)
+        if not self.running:
+            self.start()
+
+
+class Action:  # pylint:disable=too-many-instance-attributes
     '''
     :param qq_or_bot: qq号或者机器人实例(`IOTBOT`)
     :param queue: 是否开启队列，开启后任务将按顺序发送并延时指定时间，此参数与`queue_delay`对应
                   启用后，发送方法`没有返回值`
     :param queue_delay: 与`队列`对应, 开启队列时发送每条消息间的延时, 保持默认即可
-    :param send_per_minute: 与`队列`对应, 指定每分钟最多执行多少条任务
-    :param send_per_minute_behavior: 与参数`send_per_minute`相关联, 指定每分钟发送量达到
-                                    限定值后，对剩余发送任务的处理方式
-    :param send_per_minute_callback: 当达到每分钟限制后调用的函数，接收参数为一个`元组`(剩余时间, 剩余任务数)
     :param timeout: 等待IOTBOT响应时间和发送请求的延时
     :param api_path: 方法路径
     :param port: 端口
@@ -64,9 +105,6 @@ class Action:
                  qq_or_bot: Union[int, IOTBOT] = None,
                  queue: bool = False,
                  queue_delay: Union[int, float] = 1.1,
-                 send_per_minute: int = None,
-                 send_per_minute_behavior: int = WAIT_THEN_RUN,
-                 send_per_minute_callback: Callable[[int, int], Any] = None,
                  timeout: int = 15,
                  api_path: str = '/v1/LuaApiCaller',
                  port: int = 8888,
@@ -82,83 +120,10 @@ class Action:
 
         self.s = requests.Session()
 
-        # 初始化用来控制每分钟的发送频率的相关配置
-        if queue and send_per_minute is not None:
-            assert isinstance(send_per_minute, int), '`send_per_minute` must be `integer`'
-            assert 0 < send_per_minute < 40, '0 到 40 之间！'  # emm
-            assert send_per_minute_behavior in (WAIT_THEN_RUN, STOP_AND_DISCARD), '二选一'
-            self.__limit_send = True
-            self.__send_count_deque = deque(maxlen=send_per_minute)
-            self.__send_per_minute_behavior = send_per_minute_behavior
-            self.__send_per_minute_callback = send_per_minute_callback
-        else:
-            self.__limit_send = False  # 发送线程需要这个数，要放在队列相关前面
-
-        # 任务队列相关
-        if queue:
-            self.__use_queue = True
-            self.__queue_delay = queue_delay
-            self.__send_queue = Queue(maxsize=1000)
-            self.__last_send_time = time.time()
-            self._start_send_thread()
-        else:
-            self.__use_queue = False
-
-    def _start_send_thread(self):
-        # 如果模块有额外的线程，reload之后，之前的线程还是会运行.
-        # 虽然不影响程序使用，但应该挺浪费资源
-        # 目前找不到解决方法，暂时先用一个标记存储发送线程的状态，通过设置队列超时来跳出线程
-        # 添加队列任务时进行判断，如果线程已死就重启
-        self.__is_send_thread_dead = False
-        # 开启发送队列线程
-        Thread(target=self.__send_thread).start()
-
-    def __send_thread(self):
-        """
-        发送队列线程
-        负责执行队列的任务，并判断是否应该立即执行
-        包括处理每分钟发送数量限制
-        """
-        while True:
-            # 见 _start_send_thread 注释
-            try:
-                # 3h
-                job = self.__send_queue.get(timeout=3 * 60 * 60)  # type: Callable
-            except Exception:
-                self.__is_send_thread_dead = True
-                break
-            left_time = self.__queue_delay - (time.time() - self.__last_send_time)
-            if left_time > 0:
-                # print(f'还没到发送时间...,请等待{left_time}s')
-                time.sleep(left_time)  # 发送间隔延时
-
-            try:
-                # print('即将发送....')
-                job()
-                if self.__limit_send:  # 发送限额
-                    self.__send_count_deque.append(time.time())
-                    # print(self.__send_count_deque)
-                    if len(self.__send_count_deque) == self.__send_count_deque.maxlen:
-                        should_limited_time = 60 - (self.__send_count_deque[-1] - self.__send_count_deque[0])
-                        # print('should_limited_time -> ', should_limited_time)
-                        if should_limited_time > 0:
-                            # print('每分钟发送数量已达上限...')
-                            if self.__send_per_minute_behavior == STOP_AND_DISCARD:
-                                # print('清空队列...')
-                                while not self.__send_queue.empty():  # 貌似没有清空方法
-                                    self.__send_queue.get()
-                            if self.__send_per_minute_callback is not None:
-                                self.__send_per_minute_callback((should_limited_time, self.__send_queue.qsize()))
-                            time.sleep(should_limited_time)
-                            self.__send_count_deque.clear()
-                            # if self.__send_per_minute_behavior == WAIT_THEN_RUN:
-                            #     print('延时然后继续运行...')
-                            #     time.sleep(should_limited_time)
-            except Exception:
-                logger.exception('发送线程内任务出错')
-            finally:
-                self.__last_send_time = time.time()
-                # print(f'上次运行时间：{self.__last_send_time}')
+        # 任务队列
+        self._use_queue = queue
+        self._send_thread = _SendThread(queue_delay)
+        self._send_thread.setDaemon(True)
 
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
@@ -393,17 +358,11 @@ class Action:
 
     def modify_group_card(self, userID: int, groupID: int, newNick: str, timeout=5, **kwargs) -> dict:
         '''修改群名片
-
         :params userID: 修改的QQ号
         :params groupID: 群号
         :params newNick: 新群名片
-
         '''
-        data = {
-            'UserID': userID,
-            'GroupID': groupID,
-            'NewNick': newNick
-        }
+        data = {'UserID': userID, 'GroupID': groupID, 'NewNick': newNick}
         return self.baseSender('POST', 'ModifyGroupCard', data, timeout, **kwargs)
 
     def refresh_keys(self, timeout=20) -> bool:
@@ -566,7 +525,8 @@ class Action:
                    timeout: int = None,
                    api_path: str = None,
                    iot_timeout: int = None,
-                   bot_qq: int = None) -> Union[dict, bool]:
+                   bot_qq: int = None,
+                   **kwargs) -> dict:
         """
         :param method: 请求方法
         :param funcname: 请求类型
@@ -576,7 +536,7 @@ class Action:
         :param iot_timeout: IOT端处理请求等待的时间
         :param bot_qq: 机器人QQ
 
-        :return: iotbot端返回的json数据(字典)，如果返回内容非json则返回空字典
+        :return: iotbot端返回的json数据(字典)，其他情况一律返回空字典
         """
         job = functools.partial(
             self._baseSender,
@@ -589,15 +549,12 @@ class Action:
             bot_qq=bot_qq
         )
         functools.update_wrapper(job, self.baseSender)
-        if self.__use_queue:
-            self.__send_queue.put(job)
-            ###########################################
-            if self.__is_send_thread_dead:  # 重启线程
-                self._start_send_thread()
-            ###########################################
-            # print('加入队列...')
+        if self._use_queue:
+            self._send_thread.put_task(_Task(
+                target=job,
+                callback=kwargs.get('callback')
+            ))
             return None
-        # print('不加入队列...')
         return job()
 
     def _baseSender(self,
@@ -607,7 +564,7 @@ class Action:
                     timeout: int = None,
                     api_path: str = None,
                     iot_timeout: int = None,
-                    bot_qq: int = None) -> Union[dict, bool]:
+                    bot_qq: int = None) -> dict:
         params = {
             'funcname': funcname,
             'timeout': iot_timeout or self.timeout,
@@ -624,23 +581,24 @@ class Action:
                 json=data,
                 timeout=timeout or self.timeout
             )
-            response = {}
-            if rep.status_code == 200:
-                response = rep.json()
-                if response is None:  # 什么时候这个东西会是None? 0.o
-                    return {}
-                if 'Ret' in response:
-                    if response['Ret'] != 0:
-                        if response['Ret'] == 241:
-                            logger.error(f'请求频繁: {response}')
-                        else:
-                            logger.error(f'请求发送成功, 但处理失败: {response}')
-            else:
-                logger.error(f'*****不是预期的Http响应码: {rep.status_code}*****')
+            if rep.status_code != 200:
+                logger.error(f'HTTP响应码错误 => {rep.status_code}')
+                return {}
+            response = rep.json() or {}  # 什么时候rep.json()会是None? 0.o
+            self._report_response(response)
             return response
         except Exception as e:
             if isinstance(e, Timeout):
                 logger.warning('响应超时，但不代表处理未成功, 结果未知!')
             else:
-                logger.error(f'出现错误: {traceback.format_exc()}')
+                logger.error(f'出现错误 => {traceback.format_exc()}')
             return {}
+
+    def _report_response(self, response):
+        ret = response['Ret']
+        if ret == 0:
+            return
+        if ret == 241:
+            logger.error(f'请求频繁 => {response}')
+        else:
+            logger.error(f'请求发送成功, 但处理失败 => {response}')
