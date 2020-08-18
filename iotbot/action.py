@@ -337,6 +337,16 @@ class Action:  # pylint:disable=too-many-instance-attributes
         members = self.get_group_user_list(groupid, timeout, **kwargs)
         return [member for member in members if member['GroupAdmin'] == 1]
 
+    def get_group_all_admin_list(self, groupid: int, timeout=5, **kwargs) -> List[dict]:
+        """群管理列表+群主"""
+        for group in self.get_group_list(timeout)['TroopList']:
+            if group['GroupId'] == groupid:
+                owner = group['GroupOwner']
+            else:
+                owner = None
+        members = self.get_group_user_list(groupid, timeout, **kwargs)
+        return [member for member in members if member['GroupAdmin'] == 1 or member['MemberUin'] == owner]
+
     def get_group_user_list(self, groupid: int, timeout=5, **kwargs) -> Generator[dict, None, None]:
         """获取群成员列表"""
         LastUin = 0
