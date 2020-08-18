@@ -595,10 +595,11 @@ class Action:  # pylint:disable=too-many-instance-attributes
             return {}
 
     def _report_response(self, response):
-        ret = response['Ret']
-        if ret == 0:
-            return
-        if ret == 241:
-            logger.error(f'请求频繁 => {response}')
-        else:
-            logger.error(f'请求发送成功, 但处理失败 => {response}')
+        if 'Ret' in response:
+            ret = response['Ret']
+            if ret == 0:
+                return
+            if ret == 241:
+                logger.error(f'请求频繁 => {response}')
+            else:
+                logger.error(f'请求发送成功, 但处理失败 => {response}')
