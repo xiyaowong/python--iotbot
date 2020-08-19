@@ -1,11 +1,11 @@
 # python-iotbot
 
-[![pypi](https://img.shields.io/pypi/v/python-iotbot?style=flat-square "pypi")](https://pypi.org/project/python-iotbot/)
+[![pypi](https://img.shields.io/pypi/v/python-iotbot?style=flat-square 'pypi')](https://pypi.org/project/python-iotbot/)
 
 ## Install
 
 ```shell
-pip install git+https://github.com/xiyaowong/python-iotbot.git@master
+pip install python-iotbot -i https://pypi.org/simple --upgrade
 ```
 
 ## Quick Start
@@ -27,7 +27,7 @@ def group(ctx: GroupMsg):
 bot.run()
 ```
 
-[documentation](https://python-iotbot.readthedocs.io/en/latest/ "documentation")
+[documentation](https://python-iotbot.readthedocs.io/en/latest/ 'documentation')
 
 ## LICENSE
 

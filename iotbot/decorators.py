@@ -12,7 +12,7 @@ def in_content(string: str):
     """
     def deco(func):
         def inner(ctx):
-            if type(ctx) in [GroupMsg, FriendMsg]:
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if re.findall(string, ctx.Content):
                     return func(ctx)
             return None
@@ -26,7 +26,7 @@ def equal_content(string: str):
     """
     def deco(func):
         def inner(ctx):
-            if type(ctx) in [GroupMsg, FriendMsg]:
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if ctx.Content == string:
                     return func(ctx)
             return None
@@ -40,12 +40,29 @@ def not_botself(func=None):
         return functools.partial(not_botself)
 
     def inner(ctx):
-        if type(ctx) in [GroupMsg, FriendMsg]:
+        if isinstance(ctx, (GroupMsg, FriendMsg)):
             if isinstance(ctx, GroupMsg):
                 userid = ctx.FromUserId
             else:
                 userid = ctx.FromUin
             if userid != ctx.CurrentQQ:
+                return func(ctx)
+        return None
+    return inner
+
+
+def is_botself(func=None):
+    """只要机器人自身的消息"""
+    if func is None:
+        return functools.partial(not_botself)
+
+    def inner(ctx):
+        if isinstance(ctx, (GroupMsg, FriendMsg)):
+            if isinstance(ctx, GroupMsg):
+                userid = ctx.FromUserId
+            else:
+                userid = ctx.FromUin
+            if userid == ctx.CurrentQQ:
                 return func(ctx)
         return None
     return inner
@@ -58,7 +75,7 @@ def not_these_users(users: list):
     def deco(func):
         def inner(ctx):
             nonlocal users
-            if type(ctx) in [GroupMsg, FriendMsg]:
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if not hasattr(users, '__iter__'):
                     users = [users]
                 if isinstance(ctx, GroupMsg):
@@ -79,7 +96,7 @@ def only_these_users(users: list):
     def deco(func):
         def inner(ctx):
             nonlocal users
-            if type(ctx) in [GroupMsg, FriendMsg]:
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if not hasattr(users, '__iter__'):
                     users = [users]
                 if isinstance(ctx, GroupMsg):
@@ -99,7 +116,7 @@ def only_this_msg_type(msg_type: str):
     """
     def deco(func):
         def inner(ctx):
-            if type(ctx) in [GroupMsg, FriendMsg]:
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if ctx.MsgType == msg_type:
                     return func(ctx)
             return None

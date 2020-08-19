@@ -102,7 +102,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.plugMgr = PluginManager(self.plugin_dir)
         if use_plugins:
             self.plugMgr.load_plugins()
-            print(self.plugMgr.info_table)
+            print(self.plugin_status)
 
         # 依次各种初始化
         self.__initialize_socketio()
@@ -128,12 +128,29 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     def refresh_plugins(self):
         '''刷新插件目录所有插件'''
         self.plugMgr.refresh()
-        print(self.plugMgr.info_table)
+
+    def remove_plugin(self, plugin_name: str):
+        '''停用指定插件'''
+        self.plugMgr.remove_plugin(plugin_name)
+
+    def recover_plugin(self, plugin_name: str):
+        '''启用指定插件'''
+        self.plugMgr.recover_plugin(plugin_name)
+
+    @property
+    def plugin_status(self):
+        '''插件启用状态'''
+        return self.plugMgr.info_table
 
     @property
     def plugins(self):
         '''插件名列表'''
         return self.plugMgr.plugins
+
+    @property
+    def removed_plugins(self):
+        '''已停用的插件名列表'''
+        return self.plugMgr.removed_plugins
     ########################################################################
 
     def run(self):

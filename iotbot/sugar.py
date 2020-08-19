@@ -1,21 +1,18 @@
 # pylint: disable=protected-access
-"""
-封装部分最常用发送操作
-"""
-
+"""封装部分最常用发送操作"""
 import base64
 import sys
 
 from .action import Action
+from .exceptions import ContextTypeError
 from .model import FriendMsg
 from .model import GroupMsg
-from .refine_message import _AtGroupMsg
-from .refine_message import _PicFriendMsg
-from .refine_message import _PicGroupMsg
-from .refine_message import _RedBagFriendMsg
-from .refine_message import _RedBagGroupMsg
-from .refine_message import _VoiceFriendMsg
-from .refine_message import _VoiceGroupMsg
+
+
+def file_to_base64(path):
+    with open(path, 'rb') as f:
+        content = f.read()
+    return base64.b64encode(content).decode()
 
 
 def Text(text: str,
@@ -30,50 +27,27 @@ def Text(text: str,
     f = sys._getframe()
     upper = f.f_back
     upper_locals = upper.f_locals
-    if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [
-                GroupMsg,
-                FriendMsg,
-                _AtGroupMsg,
-                _PicFriendMsg,
-                _PicGroupMsg,
-                _RedBagFriendMsg,
-                _RedBagGroupMsg,
-                _VoiceFriendMsg,
-                _VoiceGroupMsg
-            ]):
+    if 'ctx' in upper_locals and isinstance(upper_locals['ctx'], (FriendMsg, GroupMsg)):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
-            if type(v) in [GroupMsg, FriendMsg]:
+            if isinstance(v, (GroupMsg, FriendMsg)):
                 ctx = v
                 break
-    ###################################################
-    if type(ctx) in [
-        GroupMsg,
-        _AtGroupMsg,
-        _PicGroupMsg,
-        _RedBagGroupMsg,
-        _VoiceGroupMsg
-    ]:
+
+    if isinstance(ctx, GroupMsg):
         return Action(ctx.CurrentQQ).send_group_text_msg(
             ctx.FromGroupId,
             content=text,
             atUser=ctx.FromUserId if at else 0
         )
-    ##################################################
-    elif type(ctx) in [
-        FriendMsg,
-        _PicFriendMsg,
-        _RedBagFriendMsg,
-        _VoiceFriendMsg,
-    ]:
+    elif isinstance(ctx, FriendMsg):
         return Action(ctx.CurrentQQ).send_friend_text_msg(
             ctx.FromUin,
             text
         )
     else:
-        raise BaseException('经支持群消息和好友消息接收函数内调用')
+        raise ContextTypeError('经支持群消息和好友消息接收函数内调用')
 
 
 def Picture(pic_url='',
@@ -88,39 +62,21 @@ def Picture(pic_url='',
 
     pic_url, pic_base64, pic_path必须给定一项
     """
-    assert any([pic_url, pic_base64, pic_path])  # 必须给定一项
+    assert any([pic_url, pic_base64, pic_path]), '必须给定一项'
 
-    # 查找消息上下文 `ctx`变量
     ctx = None
     f = sys._getframe()
     upper = f.f_back
     upper_locals = upper.f_locals
-    if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [
-                GroupMsg,
-                FriendMsg,
-                _AtGroupMsg,
-                _PicFriendMsg,
-                _PicGroupMsg,
-                _RedBagFriendMsg,
-                _RedBagGroupMsg,
-                _VoiceFriendMsg,
-                _VoiceGroupMsg
-            ]):
+    if 'ctx' in upper_locals and isinstance(upper_locals['ctx'], (FriendMsg, GroupMsg)):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
-            if type(v) in [GroupMsg, FriendMsg]:
+            if isinstance(v, (FriendMsg, GroupMsg)):
                 ctx = v
                 break
-    ##################################################
-    if type(ctx) in [
-        GroupMsg,
-        _AtGroupMsg,
-        _PicGroupMsg,
-        _RedBagGroupMsg,
-        _VoiceGroupMsg
-    ]:
+
+    if isinstance(ctx, GroupMsg):
         if pic_url:
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
@@ -134,22 +90,13 @@ def Picture(pic_url='',
                 content=content
             )
         elif pic_path:
-            with open(pic_path, 'rb') as f:
-                content = f.read()
-            b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_group_pic_msg(
                 ctx.FromGroupId,
-                picBase64Buf=b64,
+                picBase64Buf=file_to_base64(pic_path),
                 content=content
             )
         return None
-    ##################################################
-    elif type(ctx) in [
-        FriendMsg,
-        _PicFriendMsg,
-        _RedBagFriendMsg,
-        _VoiceFriendMsg,
-    ]:
+    elif isinstance(ctx, FriendMsg):
         if pic_url:
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
@@ -163,17 +110,14 @@ def Picture(pic_url='',
                 content=content
             )
         elif pic_path:
-            with open(pic_path, 'rb') as f:
-                content = f.read()
-            b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_friend_pic_msg(
                 ctx.FromUin,
-                picBase64Buf=b64,
+                picBase64Buf=file_to_base64(pic_path),
                 content=content
             )
         return None
     else:
-        raise BaseException('经支持群消息和好友消息接收函数内调用')
+        raise ContextTypeError('经支持群消息和好友消息接收函数内调用')
 
 
 def Voice(voice_url='',
@@ -186,38 +130,21 @@ def Voice(voice_url='',
 
     voice_url, voice_base64, voice_path必须给定一项
     """
-    assert any([voice_url, voice_base64, voice_path])  # 必须给定一项
-    # 查找消息上下文 `ctx`变量
+    assert any([voice_url, voice_base64, voice_path]), '必须给定一项'
+
     ctx = None
     f = sys._getframe()
     upper = f.f_back
     upper_locals = upper.f_locals
-    if ('ctx' in upper_locals and
-            type(upper_locals['ctx']) in [
-                GroupMsg,
-                FriendMsg,
-                _AtGroupMsg,
-                _PicFriendMsg,
-                _PicGroupMsg,
-                _RedBagFriendMsg,
-                _RedBagGroupMsg,
-                _VoiceFriendMsg,
-                _VoiceGroupMsg
-            ]):
+    if 'ctx' in upper_locals and isinstance(upper_locals['ctx'], (FriendMsg, GroupMsg)):
         ctx = upper_locals['ctx']
     else:
         for v in upper_locals.values():
-            if type(v) in [GroupMsg, FriendMsg]:
+            if isinstance(v, (GroupMsg, FriendMsg)):
                 ctx = v
                 break
-    ##################################################
-    if type(ctx) in [
-        GroupMsg,
-        _AtGroupMsg,
-        _PicGroupMsg,
-        _RedBagGroupMsg,
-        _VoiceGroupMsg
-    ]:
+
+    if isinstance(ctx, GroupMsg):
         if voice_url:
             return Action(ctx.CurrentQQ).send_group_voice_msg(
                 ctx.FromGroupId,
@@ -229,21 +156,12 @@ def Voice(voice_url='',
                 voiceBase64Buf=voice_base64
             )
         elif voice_path:
-            with open(voice_path, 'rb') as f:
-                content = f.read()
-            b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_group_voice_msg(
                 ctx.FromGroupId,
-                voiceBase64Buf=b64
+                voiceBase64Buf=file_to_base64(voice_path)
             )
         return None
-    ##################################################
-    elif type(ctx) in [
-        FriendMsg,
-        _PicFriendMsg,
-        _RedBagFriendMsg,
-        _VoiceFriendMsg,
-    ]:
+    elif isinstance(ctx, FriendMsg):
         if voice_url:
             return Action(ctx.CurrentQQ).send_friend_voice_msg(
                 ctx.FromUin,
@@ -255,13 +173,10 @@ def Voice(voice_url='',
                 voiceBase64Buf=voice_base64
             )
         elif voice_path:
-            with open(voice_path, 'rb') as f:
-                content = f.read()
-            b64 = base64.b64encode(content).decode()
             return Action(ctx.CurrentQQ).send_friend_voice_msg(
                 ctx.FromUin,
-                voiceBase64Buf=b64
+                voiceBase64Buf=file_to_base64(voice_path)
             )
         return None
     else:
-        raise BaseException('经支持群消息和好友消息接收函数内调用')
+        raise ContextTypeError('经支持群消息和好友消息接收函数内调用')

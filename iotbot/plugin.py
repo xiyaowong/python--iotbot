@@ -12,6 +12,11 @@ from .typing import EventMsgReceiver
 from .typing import FriendMsgReceiver
 from .typing import GroupMsgReceiver
 
+try:
+    import ujson as json
+except ImportError:
+    import json
+
 
 class Plugin:
     def __init__(self, module: ModuleType):
@@ -28,6 +33,26 @@ class PluginManager:
         self._plugins: Dict[str, Plugin] = dict()
         self._removed_plugins: Dict[str, Plugin] = dict()
 
+        # 本地缓存的停用的插件名称列表
+        self._load_removed_plugin_names()
+
+    def _load_removed_plugin_names(self):
+        if os.path.exists('.REMOVED_PLUGINS'):
+            with open('.REMOVED_PLUGINS', encoding='utf8') as f:
+                self._removed_plugin_names = json.load(f)['plugins']
+        else:
+            with open('.REMOVED_PLUGINS', 'w', encoding='utf8') as f:
+                json.dump({'tips': '用于存储已停用插件信息,请不要修改这个文件', 'plugins': []}, f, ensure_ascii=False)
+            self._removed_plugin_names = []
+
+    def _update_removed_plugin_names(self):
+        data = {
+            'tips': '用于存储已停用插件信息,请不要修改这个文件',
+            'plugins': list(set(self._removed_plugin_names))  # 去重，虽然显得多余
+        }
+        with open('.REMOVED_PLUGINS', 'w', encoding='utf8') as f:
+            json.dump(data, f, ensure_ascii=False)
+
     def load_plugins(self, plugin_dir: str = None) -> None:
         if plugin_dir is None:
             plugin_dir = self.plugin_dir
@@ -36,7 +61,9 @@ class PluginManager:
             module = importlib.import_module(
                 '{}.{}'.format(plugin_dir.replace('/', '.'), plugin_file.split('.')[0]))
             plugin = Plugin(module)
-            if plugin.name not in self._removed_plugins:
+            if plugin.name in self._removed_plugin_names:
+                self._removed_plugins[plugin.name] = plugin
+            else:
                 self._plugins[plugin.name] = plugin
 
     def refresh(self, plugin_dir: str = None) -> None:
@@ -68,7 +95,10 @@ class PluginManager:
         try:
             if plugin_name in self._plugins:
                 self._removed_plugins[plugin_name] = self._plugins.pop(plugin_name)
-        except KeyError:
+                # 缓存到本地
+                self._removed_plugin_names.append(plugin_name)
+                self._update_removed_plugin_names()
+        except KeyError:  # 可能由self._removed_plugins[plugin_name]引发
             pass
 
     def recover_plugin(self, plugin_name: str) -> None:
@@ -76,18 +106,21 @@ class PluginManager:
         try:
             if plugin_name in self._removed_plugins:
                 self._plugins[plugin_name] = self._removed_plugins.pop(plugin_name)
+                if plugin_name in self._removed_plugin_names:
+                    self._removed_plugin_names.remove(plugin_name)
+                    self._update_removed_plugin_names()
         except KeyError:
             pass
 
     @property
     def plugins(self) -> List[str]:
         '''return a list of plugin name'''
-        return [i for i in self._plugins]
+        return list(self._plugins)
 
     @property
     def removed_plugins(self) -> List[str]:
         '''return a list of removed plugin name'''
-        return [i for i in self._removed_plugins]
+        return list(self._removed_plugins)
 
     @property
     def friend_msg_receivers(self) -> List[FriendMsgReceiver]:
@@ -125,4 +158,6 @@ class PluginManager:
             len(self.event_receivers),
             ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_events])
         ])
-        return str(table)
+        table_removed = PrettyTable(['Removed Plugins'])
+        table_removed.add_row([' / '.join(self.removed_plugins)])
+        return str(table) + '\n' + str(table_removed)

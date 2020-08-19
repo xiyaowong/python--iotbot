@@ -7,16 +7,14 @@ python 版本: 3.6+
 ## 在线安装
 
 ```shell
-pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
+pip install python-iotbot -i https://pypi.org/simple --upgrade
 ```
 
 ```shell
-pip install python-iotbot
+pip install git+https://github.com/XiyaoWong/python-iotbot.git@master
 ```
 
-推荐使用第一种，pypi 上的版本滞后
-
-- 之后每次更新会上传 pypi，可以放心使用 pip 安装，前提是(尽量)使用官方源
+更新会上传 pypi，可以放心使用 pip 安装，前提是使用官方源确保最新版
 
 ## 离线安装
 

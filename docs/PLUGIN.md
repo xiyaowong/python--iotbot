@@ -35,22 +35,17 @@ bot = IOTBOT(your_bot_qq, use_plugins=True)
 可以通过以下方法管理插件:
 
 1. 方法`bot.reload_plugins()` 重载旧插件，加载新插件
-2. 属性`bot.plugins` 获取插件名称列表，用于下面方法
-3. 方法`bot.reload_plugin(plugin_name)` 根据插件名重载对应插件
-4. 方法`bot.refresh_plugins()` 刷新插件目录所有插件
-5. 方法`bot.load_plugins()` 加载新插件，已加载插件不会重载
+2. 方法`bot.refresh_plugins()` 刷新插件目录所有插件
+3. 方法`bot.load_plugins()` 加载新插件，已加载插件不会重载
 
-以上方法是插件管理对象方法的快捷方式，也是**唯一推荐**的几个方法，如果你想更细致的管理插件，看下面：
+4. 属性`bot.plugins` 获取插件名称列表，用于下面方法
+5. 方法`bot.reload_plugin(plugin_name)` 根据插件名重载对应插件
+6. 方法`bot.remove_plugin()` 根据插件名停用对应插件
 
-直接调用 `bot.plugMgr` 的方法或属性
+7. 属性`bot.removed_plugins` 获取已停用插件名称列表
+8. 方法`bot.recover_plugin()` 与 remove 对应，根据插件名恢复使用对应插件
 
-1. `load_plugins()` 加载插件，不会重载，可指定参数 plugin_dir，如果该插件位于已停用插件列表，也不会被加载
-2. `refresh()` 刷新插件目录所有插件
-3. `reload_plugins()` 重载旧插件，加载新插件。 可指定参数 plugin_dir
-4. `reload_plugin()` 根据插件名重载对应插件
-5. `remove_plugin()` 根据插件名停用对应插件
-6. `recover_plugin()` 与 remove 对应，根据插件名恢复使用对应插件
-7. `plugins` 获取已启用插件名称的列表
-8. `removed_plugins` 获取已停用插件名称的列表
+9. 属性`bot.plugin_status` 插件状态表格
 
-因为停用的插件列表是保存在内存中的，重启程序后就没了。推荐自己用其他方式实现
+~~因为停用的插件列表是保存在内存中的，重启程序后就没了。推荐自己用其他方式实现~~
+现在会将停用的插件信息保存在当前目录下的`.REMOVED_PLUGINS`文件中，这个文件不要手动修改
