@@ -1,8 +1,6 @@
 # python-iotbot
 
-```
-IOTBOT sync SDK with Python
-```
+[![pypi](https://img.shields.io/pypi/v/python-iotbot?style=flat-square "pypi")](https://pypi.org/project/python-iotbot/)
 
 ## Install
 
