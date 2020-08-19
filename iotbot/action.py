@@ -339,11 +339,11 @@ class Action:  # pylint:disable=too-many-instance-attributes
 
     def get_group_all_admin_list(self, groupid: int, timeout=5, **kwargs) -> List[dict]:
         """群管理列表+群主"""
+        owner = None
         for group in self.get_group_list(timeout)['TroopList']:
             if group['GroupId'] == groupid:
                 owner = group['GroupOwner']
-            else:
-                owner = None
+                break
         members = self.get_group_user_list(groupid, timeout, **kwargs)
         return [member for member in members if member['GroupAdmin'] == 1 or member['MemberUin'] == owner]
 
