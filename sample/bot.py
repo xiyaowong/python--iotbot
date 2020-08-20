@@ -20,31 +20,7 @@ bot.register_group_context_middleware(group_ctx_middleware)
 
 @bot.on_group_msg
 def on_group_msg(ctx: GroupMsg):
-    # 不处理自身消息
-    if ctx.FromUserId == ctx.CurrentQQ:
-        return
     content = ctx.Content
-
-    # ==========插件管理==========
-    if ctx.FromUserId == ctx.master:  # 因为中间件添加了，所以可以直接访问
-        if content == '刷新所有插件':
-            bot.refresh_plugins()
-            return
-        elif content == '加载新插件':
-            bot.load_plugins()
-            return
-        elif content.startswith('刷新插件'):  # 重载指定插件
-            plugin_name = content[4:]
-            bot.reload_plugin(plugin_name)
-            return
-        elif content == 'py插件':
-            action.send_group_text_msg(
-                ctx.FromGroupId,
-                '\n'.join(bot.plugins)
-            )
-            return
-    # ===========================
-
     # 召唤群友(回执消息)
     if ctx.FromUserId == ctx.master and content == '召唤群友':
         card = """<?xml version='1.0' encoding='UTF-8' standalone='yes' ?><msg serviceID="107" templateID="1" action="viewReceiptMessage" brief="[回执消息]" m_resid="1tko/MQMaPR0jedOx6T8tbleZtAZudGqTFakakLqukDzuTjrZS1/1V1QEUnZ8/2Y" m_fileName="6828184148041033822" sourceMsgId="0" url="" flag="3" adverSign="0" multiMsgFlag="0"><item layout="29" advertiser_id="0" aid="0"><type>1</type></item><source name="" icon="" action="" appid="-1" /></msg>"""
@@ -67,6 +43,61 @@ def on_group_msg(ctx: GroupMsg):
             ctx.FromUserId
         )
         return
+
+
+@bot.on_group_msg
+def manage_plugin(ctx: GroupMsg):
+    if ctx.FromUserId != ctx.master:
+        return
+    c = ctx.Content
+    if c == '插件管理':
+        action.send_group_text_msg(
+            ctx.FromGroupId,
+            (
+                'py插件 => 发送启用插件列表\n'
+                '已停用py插件 => 发送停用插件列表\n'
+                '刷新py插件 => 刷新所有插件,包括新建文件\n'
+                '重载py插件+插件名 => 重载指定插件\n'
+                '停用py插件+插件名 => 停用指定插件\n'
+                '启用py插件+插件名 => 启用指定插件\n'
+            )
+        )
+        return
+    # 发送启用插件列表
+    if c == 'py插件':
+        action.send_group_text_msg(
+            ctx.FromGroupId,
+            '\n'.join(bot.plugins)
+        )
+        return
+    # 发送停用插件列表
+    if c == '已停用py插件':
+        action.send_group_text_msg(
+            ctx.FromGroupId,
+            '\n'.join(bot.removed_plugins)
+        )
+        return
+    with __import__('threading').Lock():
+        try:
+            if c == '刷新py插件':
+                bot.refresh_plugins()
+            # 重载指定插件 重载py插件+[插件名]
+            elif c.startswith('重载py插件'):
+                plugin_name = c[6:]
+                bot.reload_plugin(plugin_name)
+            # 停用指定插件 停用py插件+[插件名]
+            elif c.startswith('停用py插件'):
+                plugin_name = c[6:]
+                bot.remove_plugin(plugin_name)
+            # 启用指定插件 启用py插件+[插件名]
+            elif c.startswith('启用py插件'):
+                plugin_name = c[6:]
+                bot.recover_plugin(plugin_name)
+        except Exception as e:
+            action.send_group_text_msg(
+                ctx.FromGroupId,
+                '操作失败: %s' % e
+            )
 
 
 if __name__ == "__main__":
