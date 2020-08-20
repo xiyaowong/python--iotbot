@@ -84,3 +84,8 @@
 1. 优化插件管理，使用文件存储停用的插件信息
 2. 添加 `is_botself`装饰器，只接收机器人自身消息
 3. 去除冗余代码
+
+### 2.5.1
+
+1. 封装转发视频给群(repost_video_to_group)/好友(repost_video_to_friend)两个 action
+2. 增加解析视频消息的 refine 函数

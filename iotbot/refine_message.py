@@ -1,3 +1,4 @@
+# pylint: disable=too-many-instance-attributes, super-init-not-called
 """进一步提取消息详细信息的函数"""
 from typing import List
 
@@ -226,6 +227,20 @@ class _VoiceGroupMsg(_GroupMsg):
         super()._carry_properties(ctx)
 
 
+class _VideoGroupMsg(_GroupMsg):
+    """群视频消息"""
+
+    def __init__(self, ctx: GroupMsg):
+        video_data = json.loads(ctx.Content)
+        self.ForwordBuf: str = video_data['ForwordBuf']
+        self.ForwordField: int = video_data['ForwordField']
+        self.Tips: str = video_data['Tips']
+        self.VideoMd5: str = video_data['VideoMd5']
+        self.VideoSize: str = video_data['VideoSize']
+        self.VideoUrl: str = video_data['VideoUrl']
+        super()._carry_properties(ctx)
+
+
 class _PicGroupMsg(_GroupMsg):
     """群图片/表情包消息"""
 
@@ -266,6 +281,15 @@ def refine_voice_group_msg(ctx: GroupMsg) -> _VoiceGroupMsg:
         raise ContextTypeError('Expected `GroupMsg`, but got `%s`' % ctx.__class__)
     if ctx.MsgType == MsgTypes.VoiceMsg:
         return _VoiceGroupMsg(ctx)
+    return None
+
+
+def refine_video_group_msg(ctx: GroupMsg) -> _VideoGroupMsg:
+    """群视频消息"""
+    if not isinstance(ctx, GroupMsg):
+        raise ContextTypeError('Expected `GroupMsg`, but got `%s`' % ctx.__class__)
+    if ctx.MsgType == MsgTypes.VideoMsg:
+        return _VideoGroupMsg(ctx)
     return None
 
 
@@ -314,6 +338,20 @@ class _VoiceFriendMsg(_FriendMsg):
         super()._carry_properties(ctx)
 
 
+class _VideoFriendMsg(_FriendMsg):
+    """好友视频消息"""
+
+    def __init__(self, ctx: FriendMsg):
+        video_data = json.loads(ctx.Content)
+        self.ForwordBuf: str = video_data['ForwordBuf']
+        self.ForwordField: int = video_data['ForwordField']
+        self.Tips: str = video_data['Tips']
+        self.VideoMd5: str = video_data['VideoMd5']
+        self.VideoSize: str = video_data['VideoSize']
+        self.VideoUrl: str = video_data['VideoUrl']
+        super()._carry_properties(ctx)
+
+
 class _PicFriendMsg(_FriendMsg):
     """好友图片/表情包消息"""
 
@@ -349,6 +387,15 @@ def refine_voice_friend_msg(ctx: FriendMsg) -> _VoiceFriendMsg:
         raise ContextTypeError('Expected `FriendMsg`, but got `%s`' % ctx.__class__)
     if ctx.MsgType == MsgTypes.VoiceMsg:
         return _VoiceFriendMsg(ctx)
+    return None
+
+
+def refine_video_friend_msg(ctx: FriendMsg) -> _VideoFriendMsg:
+    """好友视频消息"""
+    if not isinstance(ctx, FriendMsg):
+        raise ContextTypeError('Expected `FriendMsg`, but got `%s`' % ctx.__class__)
+    if ctx.MsgType == MsgTypes.VideoMsg:
+        return _VideoFriendMsg(ctx)
     return None
 
 

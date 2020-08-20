@@ -387,6 +387,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
 
     def get_balance(self) -> dict:
         '''获取QQ钱包余额'''
+        # TODO
     #     return self.baseSender('GET', 'GetBalance', timeout=timeout, **kwargs)
 
     def get_status(self, timeout=20) -> dict:
@@ -396,21 +397,25 @@ class Action:  # pylint:disable=too-many-instance-attributes
 
     def send_single_red_bag(self) -> dict:
         '''发送群/好友红包'''
+        # TODO
         #data = {}
         # return self.baseSender('POST', 'SendSingleRed', data, timeout, **kwargs)
 
     def send_qzone_red_bag(self) -> dict:
         '''发送QQ空间红包'''
+        # TODO
         #data = {}
         # return self.baseSender('POST', 'SendQzoneRed', data, timeout, **kwargs)
 
     def send_transfer(self) -> dict:
         '''支付转账'''
+        # TODO
         #data = {}
         # return self.baseSender('POST', 'Transfer', data, timeout, **kwargs)
 
     def open_red_bag(self, OpenRedBag) -> dict:
         '''打开红包 传入红包数据结构'''
+        # TODO
     #     return self.baseSender('POST', 'OpenRedBag', OpenRedBag, timeout, **kwargs)
 
     def add_friend(self, userID: int, groupID: int, content='加个好友!', AddFromSource=2004, timeout=20, **kwargs) -> dict:
@@ -458,6 +463,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
 
     def deal_friend(self, Action: int) -> dict:
         """处理好友请求"""
+        # TODO
         # --Action 1 忽略 2 同意 3 拒绝
         # data = {
         #     'Action':Action
@@ -466,6 +472,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
 
     def deal_group(self, Action: int) -> dict:
         '''处理群邀请'''
+        # TODO
         # --Action 14 忽略 1 同意 21 拒绝
         # data = {
         #     'Action':Action
@@ -513,6 +520,34 @@ class Action:  # pylint:disable=too-many-instance-attributes
         return self.baseSender('POST', 'OidbSvc.0x55c_1',
                                {"GroupID": groupID, "UserID": userID, "Flag": 0},
                                timeout, **kwargs)
+
+    def repost_video_to_group(self, groupID: int, forwordBuf: str, timeout=10, **kwargs) -> dict:
+        '''转发视频到群聊'''
+        data = {
+            "toUser": groupID,
+            "sendToType": 2,
+            "sendMsgType": "ForwordMsg",
+            "content": "",
+            "groupid": 0,
+            "atUser": 0,
+            "forwordBuf": forwordBuf,
+            "forwordField": 19
+        }
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
+
+    def repost_video_to_friend(self, userID: int, forwordBuf: str, timeout=10, **kwargs) -> dict:
+        '''转发视频给好友'''
+        data = {
+            "toUser": userID,
+            "sendToType": 1,
+            "sendMsgType": "ForwordMsg",
+            "content": "",
+            "groupid": 0,
+            "atUser": 0,
+            "forwordBuf": forwordBuf,
+            "forwordField": 19
+        }
+        return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def get_login_qrcode(self) -> str:
         '''返回登录二维码的base64'''

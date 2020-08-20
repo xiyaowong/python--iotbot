@@ -27,7 +27,9 @@ def group(ctx: GroupMsg):
 bot.run()
 ```
 
-[documentation](https://python-iotbot.readthedocs.io/en/latest/ 'documentation')
+[documentation](https://xiyaowong.github.io/python--iotbot 'documentation')
+
+## [CHANGELOG](./CHANGELOG.md)
 
 ## LICENSE
 

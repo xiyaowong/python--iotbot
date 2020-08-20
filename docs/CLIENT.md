@@ -100,9 +100,11 @@ from iotbot.refine_message import *
 | refine_group_shut_event_msg           | 群禁言事件                          |
 | refine_group_admin_event_msg          | 管理员变更事件                      |
 | refine_voice_group_msg                | 群语音消息                          |
+| refine_video_group_msg                | 群视频消息                          |
 | refine_pic_group_msg                  | 群图片/表情包消息                   |
 | refine_RedBag_group_msg               | 群红包消息                          |
 | refine_voice_friend_msg               | 好友语音消息                        |
+| refine_video_friend_msg               | 好友视频消息                        |
 | refine_pic_friend_msg                 | 好友图片/表情包消息                 |
 | refine_RedBag_friend_msg              | 好友红包消息                        |
 

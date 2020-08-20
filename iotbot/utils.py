@@ -8,6 +8,7 @@ class MsgTypes:
     TextMsg = 'TextMsg'
     ReplyMsg = 'ReplyMsg'
     VoiceMsg = 'VoiceMsg'
+    VideoMsg = 'VideoMsg'
     RedBagMsg = 'RedBagMsg'
 
 

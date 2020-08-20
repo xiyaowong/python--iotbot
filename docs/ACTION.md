@@ -86,6 +86,8 @@ host:
 | set_group_announce       | 设置群公告                                        |
 | set_group_admin          | 设置群管理员                                      |
 | cancel_group_admin       | 取消群管理员                                      |
+| repost_video_to_group    | 转发视频到群聊                                    |
+| repost_video_to_friend   | 转发视频给好友                                    |
 
 ## 发送队列
 
