@@ -1,6 +1,7 @@
 # python-iotbot
 
 [![pypi](https://img.shields.io/pypi/v/python-iotbot?style=flat-square 'pypi')](https://pypi.org/project/python-iotbot/)
+[![python-version](https://img.shields.io/pypi/pyversions/python-iotbot?style=flat-square)](https://pypi.org/project/python-iotbot/)
 
 ## Install
 

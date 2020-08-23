@@ -1,6 +1,5 @@
 import copy
 import sys
-import time
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
@@ -55,7 +54,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                  log: bool = True,
                  log_file: bool = True,
                  port: int = 8888,
-                 beat_delay: int = 60,
                  host: str = 'http://127.0.0.1'):
         if isinstance(qq, Sequence):
             self.qq = list(qq)
@@ -65,7 +63,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.plugin_dir = plugin_dir
         self.host = config.host or host
         self.port = config.port or port
-        self.beat_delay = beat_delay
         self.group_blacklist = set(config.group_blacklist or group_blacklist or [])
         self.friend_blacklist = set(config.friend_blacklist or friend_blacklist or [])
 
@@ -170,11 +167,11 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def connect(self):
         logger.success('Connected to server successfully!')
-        while True:
-            for qq in self.qq:
-                self.socketio.emit('GetWebConn', str(qq))
-                logger.info(f'Heartbeat -> {qq}')
-            time.sleep(self.beat_delay)
+        for qq in self.qq:
+            self.socketio.emit(
+                'GetWebConn', str(qq),
+                callback=lambda x: logger.info(f'GetWebConn -> {qq} => {x}')  # pylint: disable=cell-var-from-loop
+            )
 
     @property
     def receivers(self):

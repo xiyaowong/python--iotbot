@@ -19,7 +19,6 @@ log: 是否开启log, ×这块没写好，日志功能很糟糕×现已用三方
 log_file: 是否输出日志文件
 port: bot端运行端口
 host: bot端运行ip，需要包含schema
-beat_delay: 心跳频率，单位秒
 '''
 ```
 
