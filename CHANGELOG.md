@@ -89,3 +89,7 @@
 
 1. 封装转发视频给群(repost_video_to_group)/好友(repost_video_to_friend)两个 action
 2. 增加解析视频消息的 refine 函数
+
+### 2.5.2
+
+1. 修正误将 GetWebConn 作为心跳的错误
