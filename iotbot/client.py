@@ -163,6 +163,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                 self.socketio.wait()
             except KeyboardInterrupt:
                 self.__executor.shutdown(wait=False)
+                print('\nbye~')
                 sys.exit(0)
 
     def connect(self):

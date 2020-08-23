@@ -1,5 +1,7 @@
 # pylint: disable=too-many-instance-attributes, super-init-not-called
 """进一步提取消息详细信息的函数"""
+import copy
+import functools
 from typing import List
 
 from .exceptions import ContextTypeError
@@ -15,7 +17,15 @@ except Exception:
     import json
 
 
+def copy_ctx(f):
+    @functools.wraps(f)
+    def i(ctx):
+        return f(copy.deepcopy(ctx))
+    return i
+
 #############################Event begin########################################
+
+
 class _EventMsg(EventMsg):
     def _carry_properties(self, ctx: EventMsg):
         self.message = ctx.message
@@ -124,6 +134,7 @@ class _GroupAdminEventMsg(_EventMsg):
         super()._carry_properties(ctx)
 
 
+@copy_ctx
 def refine_group_revoke_event_msg(ctx: EventMsg) -> _GroupRevokeEventMsg:
     """群成员撤回消息事件"""
     if not isinstance(ctx, EventMsg):
@@ -133,6 +144,7 @@ def refine_group_revoke_event_msg(ctx: EventMsg) -> _GroupRevokeEventMsg:
     return None
 
 
+@copy_ctx
 def refine_group_exit_event_msg(ctx: EventMsg) -> _GroupExitEventMsg:
     """群成员退出群聊事件"""
     if not isinstance(ctx, EventMsg):
@@ -142,6 +154,7 @@ def refine_group_exit_event_msg(ctx: EventMsg) -> _GroupExitEventMsg:
     return None
 
 
+@copy_ctx
 def refine_group_join_event_msg(ctx: EventMsg) -> _GroupJoinEventMsg:
     """某人进群事件"""
     if not isinstance(ctx, EventMsg):
@@ -151,6 +164,7 @@ def refine_group_join_event_msg(ctx: EventMsg) -> _GroupJoinEventMsg:
     return None
 
 
+@copy_ctx
 def refine_friend_revoke_event_msg(ctx: EventMsg) -> _FriendRevokeEventMsg:
     """好友撤回消息事件"""
     if not isinstance(ctx, EventMsg):
@@ -160,6 +174,7 @@ def refine_friend_revoke_event_msg(ctx: EventMsg) -> _FriendRevokeEventMsg:
     return None
 
 
+@copy_ctx
 def refine_friend_delete_event_msg(ctx: EventMsg) -> _FriendDeleteEventMsg:
     """删除好友事件"""
     if not isinstance(ctx, EventMsg):
@@ -169,6 +184,7 @@ def refine_friend_delete_event_msg(ctx: EventMsg) -> _FriendDeleteEventMsg:
     return None
 
 
+@copy_ctx
 def refine_group_adminsysnotify_event_msg(ctx: EventMsg) -> _GroupAdminsysnotifyEventMsg:
     """加群申请"""
     if not isinstance(ctx, EventMsg):
@@ -178,6 +194,7 @@ def refine_group_adminsysnotify_event_msg(ctx: EventMsg) -> _GroupAdminsysnotify
     return None
 
 
+@copy_ctx
 def refine_group_shut_event_msg(ctx: EventMsg) -> _GroupShutEventMsg:
     """群禁言事件"""
     if not isinstance(ctx, EventMsg):
@@ -187,6 +204,7 @@ def refine_group_shut_event_msg(ctx: EventMsg) -> _GroupShutEventMsg:
     return None
 
 
+@copy_ctx
 def refine_group_admin_event_msg(ctx: EventMsg) -> _GroupAdminEventMsg:
     """管理员变更事件"""
     if not isinstance(ctx, EventMsg):
@@ -275,6 +293,7 @@ class _RedBagGroupMsg(_GroupMsg):
         super()._carry_properties(ctx)
 
 
+@copy_ctx
 def refine_voice_group_msg(ctx: GroupMsg) -> _VoiceGroupMsg:
     """群语音消息"""
     if not isinstance(ctx, GroupMsg):
@@ -284,6 +303,7 @@ def refine_voice_group_msg(ctx: GroupMsg) -> _VoiceGroupMsg:
     return None
 
 
+@copy_ctx
 def refine_video_group_msg(ctx: GroupMsg) -> _VideoGroupMsg:
     """群视频消息"""
     if not isinstance(ctx, GroupMsg):
@@ -293,6 +313,7 @@ def refine_video_group_msg(ctx: GroupMsg) -> _VideoGroupMsg:
     return None
 
 
+@copy_ctx
 def refine_pic_group_msg(ctx: GroupMsg) -> _PicGroupMsg:
     """群图片/表情包消息"""
     if not isinstance(ctx, GroupMsg):
@@ -302,6 +323,7 @@ def refine_pic_group_msg(ctx: GroupMsg) -> _PicGroupMsg:
     return None
 
 
+@copy_ctx
 def refine_RedBag_group_msg(ctx: GroupMsg) -> _RedBagGroupMsg:
     """群红包消息"""
     if not isinstance(ctx, GroupMsg):
@@ -381,6 +403,7 @@ class _RedBagFriendMsg(_FriendMsg):
         super()._carry_properties(ctx)
 
 
+@copy_ctx
 def refine_voice_friend_msg(ctx: FriendMsg) -> _VoiceFriendMsg:
     """好友语音消息"""
     if not isinstance(ctx, FriendMsg):
@@ -390,6 +413,7 @@ def refine_voice_friend_msg(ctx: FriendMsg) -> _VoiceFriendMsg:
     return None
 
 
+@copy_ctx
 def refine_video_friend_msg(ctx: FriendMsg) -> _VideoFriendMsg:
     """好友视频消息"""
     if not isinstance(ctx, FriendMsg):
@@ -399,6 +423,7 @@ def refine_video_friend_msg(ctx: FriendMsg) -> _VideoFriendMsg:
     return None
 
 
+@copy_ctx
 def refine_pic_friend_msg(ctx: FriendMsg) -> _PicFriendMsg:
     """好友图片/表情包消息"""
     if not isinstance(ctx, FriendMsg):
@@ -408,6 +433,7 @@ def refine_pic_friend_msg(ctx: FriendMsg) -> _PicFriendMsg:
     return None
 
 
+@copy_ctx
 def refine_RedBag_friend_msg(ctx: FriendMsg) -> _RedBagFriendMsg:
     """好友红包消息"""
     if not isinstance(ctx, FriendMsg):
