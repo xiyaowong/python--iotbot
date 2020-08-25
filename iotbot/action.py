@@ -629,7 +629,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
             if rep.status_code != 200:
                 logger.error(f'HTTP响应码错误 => {rep.status_code}')
                 return {}
-            response = rep.json() or {}  # 什么时候rep.json()会是None? 0.o
+            response = rep.json()
             self._report_response(response)
             return response
         except Exception as e:
@@ -640,11 +640,25 @@ class Action:  # pylint:disable=too-many-instance-attributes
             return {}
 
     def _report_response(self, response):
-        if 'Ret' in response:
+        if response is None:
+            logger.error(
+                '可能是SendMsg返回为null\n'
+                '可能的原因：\n'
+                '1. 发送消息超过特定版本的长度限制，比如在x86_linux上发送超过215个汉字或645个ASCII\n'
+            )
+        elif isinstance(response, dict) and 'Ret' in response:
             ret = response['Ret']
             if ret == 0:
-                return
-            if ret == 241:
-                logger.error(f'请求频繁 => {response}')
+                pass
+            elif ret == 34:
+                logger.error(f'未知错误，跟消息长度似乎无关，可以尝试分段重新发送 => {response}')
+            elif ret == 110:
+                logger.error(f'发送失败，你已被移出该群，请重新加群 => {response}')
+            elif ret == 120:
+                logger.error(f'机器人被禁言 => {response}')
+            elif ret == 241:
+                logger.error(f'消息发送频率过高，对同一个群或好友，建议发消息的最小间隔控制在1100ms以上 => {response}')
+            elif ret == 299:
+                logger.error(f'超过群发言频率限制 => {response}')
             else:
                 logger.error(f'请求发送成功, 但处理失败 => {response}')
