@@ -19,6 +19,7 @@ Welcome to python-iotbot's documentation!
    PLUGIN
    DECORATORS
    WEBHOOK
+   SCHEDULER
    SCAFFOLD
    OTHER
    SAMPLE

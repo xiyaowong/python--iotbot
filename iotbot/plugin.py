@@ -21,10 +21,25 @@ except ImportError:
 class Plugin:
     def __init__(self, module: ModuleType):
         self.module = module
-        self.name = Path(module.__file__).stem[4:]
-        self.receive_group_msg: GroupMsgReceiver = module.__dict__.get('receive_group_msg')
-        self.receive_friend_msg: FriendMsgReceiver = module.__dict__.get('receive_friend_msg')
-        self.receive_events: EventMsgReceiver = module.__dict__.get('receive_events')
+
+    def reload(self):
+        self.module = importlib.reload(self.module)
+
+    @property
+    def name(self):
+        return Path(self.module.__file__).stem[4:]
+
+    @property
+    def receive_group_msg(self) -> GroupMsgReceiver:
+        return self.module.__dict__.get('receive_group_msg')
+
+    @property
+    def receive_friend_msg(self) -> FriendMsgReceiver:
+        return self.module.__dict__.get('receive_friend_msg')
+
+    @property
+    def receive_events(self) -> EventMsgReceiver:
+        return self.module.__dict__.get('receive_events')
 
 
 class PluginManager:
@@ -42,7 +57,11 @@ class PluginManager:
                 self._removed_plugin_names = json.load(f)['plugins']
         else:
             with open('.REMOVED_PLUGINS', 'w', encoding='utf8') as f:
-                json.dump({'tips': '用于存储已停用插件信息,请不要修改这个文件', 'plugins': []}, f, ensure_ascii=False)
+                json.dump(
+                    {'tips': '用于存储已停用插件信息,请不要修改这个文件', 'plugins': []},
+                    f,
+                    ensure_ascii=False
+                )
             self._removed_plugin_names = []
 
     def _update_removed_plugin_names(self):
@@ -68,16 +87,14 @@ class PluginManager:
 
     def refresh(self, plugin_dir: str = None) -> None:
         '''reload all plugins'''
-        self._plugins.clear()
-        self.load_plugins(plugin_dir)
-        self.reload_plugins(plugin_dir)
+        return self.reload_plugins(plugin_dir)  # 之前写错了，为了兼容留下来
 
     def reload_plugins(self, plugin_dir: str = None) -> None:
         '''reload old, load new.'''
         # reload old
         old_plugins = self._plugins.copy()
         for old_plugin in old_plugins.values():
-            old_plugins[old_plugin.name].module = importlib.reload(old_plugin.module)
+            old_plugins[old_plugin.name].reload()
         # load new
         self.load_plugins(plugin_dir)
         # tidy
@@ -88,7 +105,7 @@ class PluginManager:
         whether the plugin exists or not, it will always keep quiet.
         '''
         if plugin_name in self._plugins:
-            self._plugins[plugin_name].module = importlib.reload(self._plugins[plugin_name].module)
+            self._plugins[plugin_name].reload()
 
     def remove_plugin(self, plugin_name: str) -> None:
         '''remove not delete.'''
@@ -146,18 +163,18 @@ class PluginManager:
         table.add_row([
             'Friend Msg Receiver',
             len(self.friend_msg_receivers),
-            ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_friend_msg])
+            '/'.join([f'{p.name}' for p in self._plugins.values() if p.receive_friend_msg])
         ])
         table.add_row([
             'Group  Msg Receiver',
             len(self.group_msg_receivers),
-            ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_group_msg])
+            '/'.join([f'{p.name}' for p in self._plugins.values() if p.receive_group_msg])
         ])
         table.add_row([
             'Event      Receiver',
             len(self.event_receivers),
-            ' '.join([f'<{p.name}>' for p in self._plugins.values() if p.receive_events])
+            '/'.join([f'{p.name}' for p in self._plugins.values() if p.receive_events])
         ])
         table_removed = PrettyTable(['Removed Plugins'])
-        table_removed.add_row([' / '.join(self.removed_plugins)])
+        table_removed.add_row(['/'.join(self.removed_plugins)])
         return str(table) + '\n' + str(table_removed)

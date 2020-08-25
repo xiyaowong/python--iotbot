@@ -28,11 +28,12 @@ setup(
     author_email="xiyao.wong@foxmail.com",
     url="https://github.com/XiyaoWong/python-iotbot",
     license='MIT',
-    keywords=['iotbot', 'iotbot sdk', 'iotqq'],
+    keywords=['iotbot', 'iotbot sdk', 'iotqq', 'OPQ', 'OPQBot'],
     packages=['iotbot'],
     install_requires=[
         'python-socketio >= 4.5.1', 'websocket-client >= 0.57.0',
-        'requests >= 2.23.0', 'prettytable >= 0.7.2', 'loguru >= 0.5.1'
+        'requests >= 2.23.0', 'prettytable >= 0.7.2', 'loguru >= 0.5.1',
+        'schedule >= 0.6.0'
     ],
     entry_points='''
         [console_scripts]

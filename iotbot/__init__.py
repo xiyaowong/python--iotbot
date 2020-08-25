@@ -17,6 +17,9 @@ github.com/xiyaowong/python-iotbot
 >>> @bot.on_event
 >>> def event(message: EventMsg):
 >>>     pass
+
+>>> if __name__ == '__main__':
+        bot.run()
 """
 
 from .action import Action
@@ -24,4 +27,5 @@ from .client import IOTBOT
 from .model import EventMsg
 from .model import FriendMsg
 from .model import GroupMsg
-from .model import model_map
+
+__author__ = 'wongxy'

@@ -7,6 +7,7 @@
 - [插件](PLUGIN.md)
 - [接收函数装饰器](DECORATORS.md)
 - [Web Hook](WEBHOOK.md)
+- [定时任务](SCHEDULER.md)
 - [脚手架](SCAFFOLD.md)
 - [其他](OTHER.md)
 - [示例](SAMPLE.md)

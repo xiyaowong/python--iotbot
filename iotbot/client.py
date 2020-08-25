@@ -1,5 +1,6 @@
 import copy
 import sys
+import time
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
@@ -7,6 +8,7 @@ from typing import List
 from typing import Union
 
 import socketio
+from schedule import Scheduler as _Scheduler
 
 from .config import config
 from .logger import logger
@@ -66,6 +68,9 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.group_blacklist = set(config.group_blacklist or group_blacklist or [])
         self.friend_blacklist = set(config.friend_blacklist or friend_blacklist or [])
 
+        # 作为程序是否应该退出的标志，以便后续用到，如定时任务
+        self._exit = False
+
         if log:
             if log_file:
                 logger.add(
@@ -76,6 +81,9 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                 )
         else:
             logger.disable(__name__)
+
+        # 用于定时任务
+        self.scheduler = _Scheduler()
 
         # 手动添加的消息接收函数
         self.__friend_msg_receivers_from_hand = []
@@ -150,29 +158,67 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         return self.plugMgr.removed_plugins
     ########################################################################
 
+    # 调度定时任务
+    def _run_padding(self):
+        logger.info(f'{len(self.scheduler.jobs)} tasks that are scheduled to run.')
+        while True:
+            # 定时任务不是主角，所以必须其他工作正常才运行
+            if self._exit:
+                return
+            s = self.scheduler
+            runnable_jobs = (job for job in s.jobs if job.should_run)
+            for job in sorted(runnable_jobs):
+                if hasattr(job.job_func, '__name__'):
+                    job_func_name = job.job_func.__name__
+                else:
+                    job_func_name = repr(job.job_func)
+                logger.info('Running task => %s' % job_func_name)
+                s._run_job(job)  # pylint: disable=protected-access
+            # 避免不必要的循环
+            # 因为定时任务间隔都很长，进入延时后并不能很好的判断self._exit来退出
+            # 所以这里每次只延时`delay`秒就判断一次是否应该退出
+            delay = 5
+            t = int(s.idle_seconds - 5)  # 延时不是必要的，减去5s抵消下面的时间消耗
+            if t <= 0:
+                continue
+            for _ in range(t // delay):
+                if self._exit:
+                    return
+                time.sleep(delay)
+
     def run(self):
         logger.info('Connecting to the server...')
-
         try:
             self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
         except Exception:
-            logger.exception('启动失败')
+            logger.exception('连接失败')
+            self.__executor.shutdown(False)
+            self._exit = True
             sys.exit(1)
         else:
             try:
                 self.socketio.wait()
             except KeyboardInterrupt:
                 self.__executor.shutdown(wait=False)
+                self._exit = True
                 print('\nbye~')
                 sys.exit(0)
 
     def connect(self):
         logger.success('Connected to server successfully!')
+
+        # GetWebConn
         for qq in self.qq:
             self.socketio.emit(
                 'GetWebConn', str(qq),
                 callback=lambda x: logger.info(f'GetWebConn -> {qq} => {x}')  # pylint: disable=cell-var-from-loop
             )
+
+        # 启动定时任务
+        if len(self.scheduler.jobs) != 0:
+            (self.__executor
+             .submit(self._run_padding)
+             .add_done_callback(self.__thread_pool_callback))
 
     @property
     def receivers(self):
