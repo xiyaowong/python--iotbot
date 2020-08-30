@@ -40,6 +40,9 @@ class FriendMsg:
         self.Content: str = self.data.get('Content')
         self.RedBaginfo: dict = self.data.get('RedBaginfo')
 
+        # 私聊(临时会话)特有
+        self.TempUin: int = self.data.get('TempUin')  #入口群聊ID
+
     def __getitem__(self, key):
         return self.message[key]
 

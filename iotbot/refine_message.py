@@ -259,14 +259,26 @@ class _VideoGroupMsg(_GroupMsg):
         super()._carry_properties(ctx)
 
 
+class _GroupPic:
+    def __init__(self, pic: dict):
+        '''[{"FileId":2161733733,"FileMd5":"","FileSize":449416,"ForwordBuf":"","ForwordField":8,"Url":""}'''
+        self.FileId: int = pic.get('FileId')
+        self.FileMd5: str = pic.get('FileMd5')
+        self.FileSize: int = pic.get('FileSize')
+        self.ForwordBuf: str = pic.get('ForwordBuf')
+        self.ForwordField: int = pic.get('ForwordField')
+        self.Url: str = pic.get('Url')
+
+
 class _PicGroupMsg(_GroupMsg):
     """群图片/表情包消息"""
 
     def __init__(self, ctx: GroupMsg):
         pic_data = json.loads(ctx.Content)
-        self.GroupPic: List[dict] = pic_data['GroupPic']
+        self.GroupPic: List[_GroupPic] = [_GroupPic(i) for i in pic_data['GroupPic']]
         self.Tips: str = pic_data['Tips']
         super()._carry_properties(ctx)
+        self.Content: str = pic_data.get('Content')
 
 
 class _AtGroupMsg(_GroupMsg):
@@ -374,14 +386,26 @@ class _VideoFriendMsg(_FriendMsg):
         super()._carry_properties(ctx)
 
 
+class _FriendPic:
+    def __init__(self, pic: dict):
+        '''好友图片单个图片所包含的数据
+        [{"FileMd5":"","FileSize":0,"Path":"","Url":""}]中的一个
+        '''
+        self.FileMd5: str = pic.get('FileMd5')
+        self.FileSize: int = pic.get('FileSize')
+        self.Path: str = pic.get('Path')
+        self.Url: str = pic.get('Url')
+
+
 class _PicFriendMsg(_FriendMsg):
     """好友图片/表情包消息"""
 
     def __init__(self, ctx: FriendMsg):
         pic_data = json.loads(ctx.Content)
-        self.GroupPic: List[dict] = pic_data['FriendPic']
+        self.FriendPic: List[_FriendPic] = [_FriendPic(i) for i in pic_data['FriendPic']]
         self.Tips: str = pic_data['Tips']
         super()._carry_properties(ctx)
+        self.Content = pic_data.get('Content')
 
 
 class _RedBagFriendMsg(_FriendMsg):

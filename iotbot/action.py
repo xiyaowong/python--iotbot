@@ -24,6 +24,7 @@ from requests.exceptions import Timeout
 from .client import IOTBOT
 from .config import config
 from .logger import logger
+from .utils import check_schema
 
 try:
     import ujson as json
@@ -112,7 +113,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
         self.timeout = timeout
         self.api_path = api_path
         self.port = config.port or port
-        self.host = config.host or host
+        self.host = config.host or check_schema(host)
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:
@@ -627,7 +628,8 @@ class Action:  # pylint:disable=too-many-instance-attributes
                 timeout=timeout or self.timeout
             )
             if rep.status_code != 200:
-                logger.error(f'HTTP响应码错误 => {rep.status_code}')
+                logger.error(f'HTTP响应码错误, 请检查地址端口是否正确, \
+                             {self.host}:{self.port} => {rep.status_code}')
                 return {}
             response = rep.json()
             self._report_response(response)

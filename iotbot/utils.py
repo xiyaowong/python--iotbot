@@ -10,6 +10,7 @@ class MsgTypes:
     VoiceMsg = 'VoiceMsg'
     VideoMsg = 'VideoMsg'
     RedBagMsg = 'RedBagMsg'
+    TempSessionMsg = 'TempSessionMsg'
 
 
 class EventNames:
@@ -24,6 +25,7 @@ class EventNames:
     ON_EVENT_GROUP_ADMIN = 'ON_EVENT_GROUP_ADMIN'
 
 
+# pylint: disable=non-ascii-name
 class Emoticons:
     """表情"""
     k歌 = '[表情140]'
