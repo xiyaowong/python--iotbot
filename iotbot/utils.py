@@ -1,3 +1,4 @@
+import base64
 import re
 
 
@@ -167,6 +168,12 @@ class Emoticons:
     钻戒 = '[表情165]'
     左哼哼 = '[表情102]'
     左太极 = '[表情133]'
+
+
+def file_to_base64(path):
+    with open(path, 'rb') as f:
+        content = f.read()
+    return base64.b64encode(content).decode()
 
 
 def check_schema(url: str) -> str:

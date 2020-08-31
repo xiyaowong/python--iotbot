@@ -3,7 +3,6 @@
 使用的前提:
     已经通过.iotbot.json配置好地址和端口 或者 地址端口保持默认值,即127.0.0.1:8888
 """
-import base64
 import sys
 from typing import Union
 
@@ -11,12 +10,7 @@ from .action import Action
 from .exceptions import ContextTypeError
 from .model import FriendMsg
 from .model import GroupMsg
-
-
-def file_to_base64(path):
-    with open(path, 'rb') as f:
-        content = f.read()
-    return base64.b64encode(content).decode()
+from .utils import file_to_base64
 
 
 def Text(text: str,

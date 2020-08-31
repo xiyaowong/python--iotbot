@@ -15,14 +15,14 @@ def on_group_msg(ctx: GroupMsg):
     if ctx.Content == '刷新插件':
         bot.refresh_plugins()
     if ctx.Content == '.test':
-        action.send_group_pic_msg(ctx.FromGroupId, 'https://t.cn/A6Am7xYO')
+        action.send_group_pic_msg(ctx.FromGroupId, 'http://url.cn/cqjYvc06')
 
 
 @bot.on_friend_msg
 def on_friend_msg(ctx: FriendMsg):
     print(ctx.message)
     if ctx.Content == '.test':
-        action.send_friend_pic_msg(ctx.FromUin, picUrl='https://t.cn/A6Am7xYO')
+        action.send_friend_pic_msg(ctx.FromUin, picUrl='http://url.cn/cqjYvc06')
 
 
 @bot.on_event

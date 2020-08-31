@@ -16,17 +16,18 @@ qq_or_bot: qq 号或者机器人实例(`IOTBOT`), 如果传入机器人实例，
 
 可选参数:
 与发送队列有关的参数:
-queue:
-queue_delay:
+queue: 队列开关
+queue_delay: 队列延时
 ------
-timeout:
+timeout: 发送请求等待响应的时间
 api_path:
 port:
 host:
 '''
 ```
 
-**每个方法有完善的代码提示，参数命名也对应原 api 数据命名，所以不说明了。对于参数的疑问请先查询 iotqq 提供 webapi 文档**
+**每个方法有完善的代码提示，参数命名也对应原 api 数据命名，所以不说明了。对于参数的疑问请先查询 iotqq 提供 webapi 文档
+如果还有疑问，请查看源码**
 
 ## Action.baseSender
 
@@ -91,7 +92,7 @@ host:
 
 ## 发送队列
 
-发送过快会导致发送失败，或消息被 tx 屏蔽, 所以某些情况很有必要开启，特别是发图
+发送过快会导致发送失败或消息被 tx 屏蔽, 所以某些情况很有必要开启，特别是发图
 
 初始化`Action`时设置参数`queue`为`True`即可以队列的方式执行发送任务，开启后对应有两个参数可以设置
 
@@ -106,26 +107,16 @@ callback 要求为一个函数，函数有且只能有一个参数，之后会�
 
 没有对不同的群和 api 进行分开发送，即所有操作都会排入队列中, 这样也符合真人行为(个人觉得)
 
-2. Action 必须定义为**全局变量**，不能放在接收函数内
-   参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
-
-### ~~发送限额(每分钟)~~, 该功能已废弃
-
-可以设置每分钟允许最多发送多少条消息，因此只在**开启队列**后才有效
-参数：
-
-1. `send_per_minute` 每分钟发送多少条
-2. `send_per_minute_behavior` 如果每分钟发送条数满了，该怎么处理队列剩余的任务，可选项有 ①`action.WAIT_THEN_RUN`等待至下一分钟，再继续执行剩余任务 ②`action.STOP_AND_DISCARD`删除剩余任务
-3. 还有一个不太实用的参数`send_per_minute_callback`这个参数是一个函数，在每分钟发送条数满了之后自动调用，传给该函数的参数是一个元组 -> (剩余时间, 剩余任务数))
-
-其他说明：发送限额因为某些原因不好实现针对不同群聊进行分开记录，所以假定有两个群同时发送同一个指令，每分钟限制会把这些消息统计在一起。可以通过定义和使用不同的 action 来解决...
+2. Action 必须定义为**全局变量**，不能放在接收函数内,这个其实不应该说明的，因为放在函数内会导致的问题显而易见
+3. 参考[bot_test_queue](https://github.com/XiyaoWong/python-iotbot/blob/master/sample/plugins/bot_test_queue.py)
 
 ## sugar
 
-在 action 的基础上深度封装了常用操作
+在 action 的基础上深度封装了常用操作, 适用于**简单**的场景，不支持队列发送
+使用的前提是使用默认的端口和 ip 配置或者已经设置好文件`.iotbot.json`，这个是什么在配置章节介绍
 
 ```python
-from iotbot.sugar import Text, Picture, Voice
+from iotbot.sugar import Text, Picture, Voice, Send
 
 Text('Hello') # 对该消息的来源(群或好友),发送内容为Hello的文字消息
 Picture(pic_url='') # 同上，这里是发送图片消息
@@ -133,14 +124,14 @@ Voice(...)
 ...
 ```
 
-具体参数看代码提示即可
+调用这几个方法，会自动选择上下文对进行不同的回复，包括临时会话
+
+具体参数看代码提示, 如果提示不全请看源码注释!
 
 这几个函数**只能**在群消息和好友消息接收函数中使用
 
-同时必须保证 iotbot 端的配置均为默认配置，即端口号为 8888
-
-以后若有添加，不会在写在这里，更新后留意代码补全列表即可
-
 ## Tips
 
-因为 Action 和 IOTBOT 实例完全解耦，用这个替代 shell 脚本执行定时任务，会很方便
+因为 Action 和 IOTBOT
+实例完全解耦，所以你可以在自己的脚本中使用，比如用这个替代
+shell 替代定时脚本
