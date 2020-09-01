@@ -134,10 +134,9 @@ def not_these_groups(groups: list):
             if isinstance(ctx, GroupMsg):
                 if not hasattr(groups, '__iter__'):
                     groups = [groups]
-                if isinstance(ctx, GroupMsg):
-                    from_group = ctx.FromGroupId
-                    if from_group not in groups:
-                        return func(ctx)
+                from_group = ctx.FromGroupId
+                if from_group not in groups:
+                    return func(ctx)
             return None
         return inner
     return deco
@@ -153,10 +152,9 @@ def only_these_groups(groups: list):
             if isinstance(ctx, GroupMsg):
                 if not hasattr(groups, '__iter__'):
                     groups = [groups]
-                if isinstance(ctx, GroupMsg):
-                    from_group = ctx.FromGroupId
-                    if from_group in groups:
-                        return func(ctx)
+                from_group = ctx.FromGroupId
+                if from_group in groups:
+                    return func(ctx)
             return None
         return inner
     return deco
