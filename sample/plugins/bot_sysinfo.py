@@ -40,7 +40,16 @@ def get_memory_info():
     swap_used = round((float(swap.used) / 1024 / 1024 / 1024), 3)  # 已用swap
     swap_free = round((float(swap.free) / 1024 / 1024 / 1024), 3)  # 空闲swap
     swap_percent = swap.percent  # swap使用率
-    men_info = (total_nc, used_nc, available_nc, percent_nc, swap_total, swap_used, swap_free, swap_percent)
+    men_info = (
+        total_nc,
+        used_nc,
+        available_nc,
+        percent_nc,
+        swap_total,
+        swap_used,
+        swap_free,
+        swap_percent,
+    )
     return men_info
 
 
@@ -49,8 +58,10 @@ def uptime():
     boot = psutil.boot_time()
     boottime = datetime.datetime.fromtimestamp(boot).strftime("%Y-%m-%d %H:%M:%S")
     nowtime = datetime.datetime.fromtimestamp(now).strftime("%Y-%m-%d %H:%M:%S")
-    up_time = str(datetime.datetime.utcfromtimestamp(now).replace(microsecond=0) - datetime.datetime.utcfromtimestamp(
-        boot).replace(microsecond=0))
+    up_time = str(
+        datetime.datetime.utcfromtimestamp(now).replace(microsecond=0)
+        - datetime.datetime.utcfromtimestamp(boot).replace(microsecond=0)
+    )
     alltime = (boottime, nowtime, up_time)
     return alltime
 
@@ -59,13 +70,32 @@ def sysinfo():
     cpu_info = get_cpu_info()
     mem_info = get_memory_info()
     up_time = uptime()
-    msg = 'CPU型号:{0}\r\n频率:{1}\r\n架构:{2}\r\n核心数:{3}\r\n线程数:{4}\r\n负载:{5}%\r\n{6}\r\n' \
-          '总内存:{7}G\r\n已用内存:{8}G\r\n空闲内存:{9}G\r\n内存使用率:{10}%\r\n{6}\r\n' \
-          'swap:{11}G\r\n已用swap:{12}G\r\n空闲swap:{13}G\r\nswap使用率:{14}%\r\n{6}\r\n' \
-          '开机时间:{15}\r\n当前时间:{16}\r\n已运行时间:{17}'
-    full_meg = msg.format(cpu_info[0], cpu_info[1], cpu_info[2], cpu_info[3], cpu_info[4], cpu_info[5], '*' * 20,
-                          mem_info[0], mem_info[1], mem_info[2], mem_info[3], mem_info[4],
-                          mem_info[5], mem_info[6], mem_info[7], up_time[0], up_time[1], up_time[2])
+    msg = (
+        'CPU型号:{0}\r\n频率:{1}\r\n架构:{2}\r\n核心数:{3}\r\n线程数:{4}\r\n负载:{5}%\r\n{6}\r\n'
+        '总内存:{7}G\r\n已用内存:{8}G\r\n空闲内存:{9}G\r\n内存使用率:{10}%\r\n{6}\r\n'
+        'swap:{11}G\r\n已用swap:{12}G\r\n空闲swap:{13}G\r\nswap使用率:{14}%\r\n{6}\r\n'
+        '开机时间:{15}\r\n当前时间:{16}\r\n已运行时间:{17}'
+    )
+    full_meg = msg.format(
+        cpu_info[0],
+        cpu_info[1],
+        cpu_info[2],
+        cpu_info[3],
+        cpu_info[4],
+        cpu_info[5],
+        '*' * 20,
+        mem_info[0],
+        mem_info[1],
+        mem_info[2],
+        mem_info[3],
+        mem_info[4],
+        mem_info[5],
+        mem_info[6],
+        mem_info[7],
+        up_time[0],
+        up_time[1],
+        up_time[2],
+    )
     return full_meg
 
 

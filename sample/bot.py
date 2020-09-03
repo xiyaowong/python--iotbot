@@ -1,8 +1,6 @@
 import requests
 
-from iotbot import IOTBOT
-from iotbot import Action
-from iotbot import GroupMsg
+from iotbot import IOTBOT, Action, GroupMsg
 
 bot_qq = 123
 bot = IOTBOT(bot_qq, use_plugins=True, plugin_dir='plugins')
@@ -31,7 +29,7 @@ def on_group_msg(ctx: GroupMsg):
     if content == 'nmsl':
         action.send_group_text_msg(
             ctx.FromGroupId,
-            requests.get('https://nmsl.shadiao.app/api.php?level=min&lang=zh_cn').text
+            requests.get('https://nmsl.shadiao.app/api.php?level=min&lang=zh_cn').text,
         )
         return
 
@@ -40,7 +38,7 @@ def on_group_msg(ctx: GroupMsg):
         action.send_group_text_msg(
             ctx.FromGroupId,
             '\n' + requests.get('https://chp.shadiao.app/api.php').text,
-            ctx.FromUserId
+            ctx.FromUserId,
         )
         return
 
@@ -60,22 +58,16 @@ def manage_plugin(ctx: GroupMsg):
                 '重载py插件+插件名 => 重载指定插件\n'
                 '停用py插件+插件名 => 停用指定插件\n'
                 '启用py插件+插件名 => 启用指定插件\n'
-            )
+            ),
         )
         return
     # 发送启用插件列表
     if c == 'py插件':
-        action.send_group_text_msg(
-            ctx.FromGroupId,
-            '\n'.join(bot.plugins)
-        )
+        action.send_group_text_msg(ctx.FromGroupId, '\n'.join(bot.plugins))
         return
     # 发送停用插件列表
     if c == '已停用py插件':
-        action.send_group_text_msg(
-            ctx.FromGroupId,
-            '\n'.join(bot.removed_plugins)
-        )
+        action.send_group_text_msg(ctx.FromGroupId, '\n'.join(bot.removed_plugins))
         return
     with __import__('threading').Lock():
         try:
@@ -94,10 +86,7 @@ def manage_plugin(ctx: GroupMsg):
                 plugin_name = c[6:]
                 bot.recover_plugin(plugin_name)
         except Exception as e:
-            action.send_group_text_msg(
-                ctx.FromGroupId,
-                '操作失败: %s' % e
-            )
+            action.send_group_text_msg(ctx.FromGroupId, '操作失败: %s' % e)
 
 
 if __name__ == "__main__":

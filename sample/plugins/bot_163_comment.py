@@ -1,9 +1,7 @@
 import requests
 
-from iotbot import Action
-from iotbot import GroupMsg
-from iotbot.decorators import equal_content
-from iotbot.decorators import not_botself
+from iotbot import Action, GroupMsg
+from iotbot.decorators import equal_content, not_botself
 
 # 推荐用lua写
 
@@ -17,13 +15,12 @@ def receive_group_msg(ctx: GroupMsg):
         data = rep.json()
         Action(ctx.CurrentQQ).send_group_pic_msg(
             ctx.FromGroupId,
-            content='歌曲: {title}\n歌手: {author}\n评论: {comment}'
-            .format(
+            content='歌曲: {title}\n歌手: {author}\n评论: {comment}'.format(
                 title=data['title'],
                 author=data['author'],
-                comment=data['comment_content']
+                comment=data['comment_content'],
             ),
-            picUrl=data['images']
+            picUrl=data['images'],
         )
     except Exception:
         pass

@@ -24,8 +24,6 @@ github.com/xiyaowong/python-iotbot
 
 from .action import Action
 from .client import IOTBOT
-from .model import EventMsg
-from .model import FriendMsg
-from .model import GroupMsg
+from .model import EventMsg, FriendMsg, GroupMsg
 
 __author__ = 'wongxy'

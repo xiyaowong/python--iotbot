@@ -5,11 +5,8 @@ import functools
 from typing import List
 
 from .exceptions import ContextTypeError
-from .model import EventMsg
-from .model import FriendMsg
-from .model import GroupMsg
-from .utils import EventNames
-from .utils import MsgTypes
+from .model import EventMsg, FriendMsg, GroupMsg
+from .utils import EventNames, MsgTypes
 
 try:
     import ujson as json
@@ -21,7 +18,9 @@ def copy_ctx(f):
     @functools.wraps(f)
     def i(ctx):
         return f(copy.deepcopy(ctx))
+
     return i
+
 
 #############################Event begin########################################
 
@@ -185,7 +184,9 @@ def refine_friend_delete_event_msg(ctx: EventMsg) -> _FriendDeleteEventMsg:
 
 
 @copy_ctx
-def refine_group_adminsysnotify_event_msg(ctx: EventMsg) -> _GroupAdminsysnotifyEventMsg:
+def refine_group_adminsysnotify_event_msg(
+    ctx: EventMsg,
+) -> _GroupAdminsysnotifyEventMsg:
     """加群申请"""
     if not isinstance(ctx, EventMsg):
         raise ContextTypeError('Expected `EventMsg`, but got `%s`' % ctx.__class__)
@@ -212,6 +213,8 @@ def refine_group_admin_event_msg(ctx: EventMsg) -> _GroupAdminEventMsg:
     if ctx.EventName == EventNames.ON_EVENT_GROUP_ADMIN:
         return _GroupAdminEventMsg(ctx)
     return None
+
+
 #############################Event end##########################################
 
 
@@ -343,6 +346,8 @@ def refine_RedBag_group_msg(ctx: GroupMsg) -> _RedBagGroupMsg:
     if ctx.MsgType == MsgTypes.RedBagMsg:
         return _RedBagGroupMsg(ctx)
     return None
+
+
 #############################Group end##########################################
 
 
@@ -388,9 +393,9 @@ class _VideoFriendMsg(_FriendMsg):
 
 class _FriendPic:
     def __init__(self, pic: dict):
-        '''好友图片单个图片所包含的数据
+        """好友图片单个图片所包含的数据
         [{"FileMd5":"","FileSize":0,"Path":"","Url":""}]中的一个
-        '''
+        """
         self.FileMd5: str = pic.get('FileMd5')
         self.FileSize: int = pic.get('FileSize')
         self.Path: str = pic.get('Path')
@@ -402,7 +407,9 @@ class _PicFriendMsg(_FriendMsg):
 
     def __init__(self, ctx: FriendMsg):
         pic_data = json.loads(ctx.Content)
-        self.FriendPic: List[_FriendPic] = [_FriendPic(i) for i in pic_data['FriendPic']]
+        self.FriendPic: List[_FriendPic] = [
+            _FriendPic(i) for i in pic_data['FriendPic']
+        ]
         self.Tips: str = pic_data['Tips']
         super()._carry_properties(ctx)
         self.Content = pic_data.get('Content')
@@ -465,4 +472,6 @@ def refine_RedBag_friend_msg(ctx: FriendMsg) -> _RedBagFriendMsg:
     if ctx.MsgType == MsgTypes.RedBagMsg:
         return _RedBagFriendMsg(ctx)
     return None
+
+
 #############################Friend end#########################################

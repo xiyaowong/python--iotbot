@@ -4,6 +4,7 @@ import re
 
 class MsgTypes:
     """消息类型"""
+
     AtMsg = 'AtMsg'
     PicMsg = 'PicMsg'
     TextMsg = 'TextMsg'
@@ -16,6 +17,7 @@ class MsgTypes:
 
 class EventNames:
     """事件类型"""
+
     ON_EVENT_GROUP_REVOKE = 'ON_EVENT_GROUP_REVOKE'
     ON_EVENT_GROUP_EXIT = 'ON_EVENT_GROUP_EXIT'
     ON_EVENT_GROUP_JOIN = 'ON_EVENT_GROUP_JOIN'
@@ -29,6 +31,7 @@ class EventNames:
 # pylint: disable=non-ascii-name
 class Emoticons:
     """表情"""
+
     k歌 = '[表情140]'
     爱你 = '[表情122]'
     爱情 = '[表情42]'

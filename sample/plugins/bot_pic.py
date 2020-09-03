@@ -16,10 +16,12 @@ def receive_group_msg(ctx: GroupMsg):
         random.seed(os.urandom(100))
         Action(ctx.CurrentQQ).send_group_pic_msg(
             ctx.FromGroupId,
-            picUrl=random.choice([  # 随便找的api
-                'http://api.btstu.cn/sjbz/?lx=meizi',
-                'http://api.btstu.cn/sjbz/?lx=m_meizi',
-                'http://api.btstu.cn/sjbz/?m_lx=suiji',
-            ])
+            picUrl=random.choice(
+                [  # 随便找的api
+                    'http://api.btstu.cn/sjbz/?lx=meizi',
+                    'http://api.btstu.cn/sjbz/?lx=m_meizi',
+                    'http://api.btstu.cn/sjbz/?m_lx=suiji',
+                ]
+            ),
         )
         return

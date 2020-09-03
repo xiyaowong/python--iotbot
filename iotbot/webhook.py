@@ -6,9 +6,7 @@ import requests
 from . import sugar
 from .config import config
 from .exceptions import InvalidConfigError
-from .model import EventMsg
-from .model import FriendMsg
-from .model import GroupMsg
+from .model import EventMsg, FriendMsg, GroupMsg
 
 
 def _check_config():
@@ -21,9 +19,9 @@ _check_config()
 
 def receive_group_msg(ctx: GroupMsg):
     try:
-        resp = requests.post(config.webhook_post_url,
-                             json=ctx.message,
-                             timeout=config.webhook_timeout)
+        resp = requests.post(
+            config.webhook_post_url, json=ctx.message, timeout=config.webhook_timeout
+        )
         resp.raise_for_status()
     except Exception:
         print(traceback.format_exc())
@@ -56,9 +54,9 @@ def receive_group_msg(ctx: GroupMsg):
 
 def receive_friend_msg(ctx: FriendMsg):
     try:
-        resp = requests.post(config.webhook_post_url,
-                             json=ctx.message,
-                             timeout=config.webhook_timeout)
+        resp = requests.post(
+            config.webhook_post_url, json=ctx.message, timeout=config.webhook_timeout
+        )
         resp.raise_for_status()
     except Exception:
         print(traceback.format_exc())
@@ -92,8 +90,8 @@ def receive_friend_msg(ctx: FriendMsg):
 def receive_events(ctx: EventMsg):
     # 事件消息只上报(懒)
     try:
-        requests.post(config.webhook_post_url,
-                      json=ctx.message,
-                      timeout=config.webhook_timeout)
+        requests.post(
+            config.webhook_post_url, json=ctx.message, timeout=config.webhook_timeout
+        )
     except Exception:
         pass

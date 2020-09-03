@@ -21,7 +21,4 @@ def receive_group_msg(ctx: GroupMsg):
             content = f.read()
         b64_str = base64.b64encode(content).decode()
 
-        Action(ctx.CurrentQQ).send_group_pic_msg(
-            ctx.FromGroupId,
-            picBase64Buf=b64_str
-        )
+        Action(ctx.CurrentQQ).send_group_pic_msg(ctx.FromGroupId, picBase64Buf=b64_str)

@@ -1,11 +1,7 @@
-from iotbot import Action
-from iotbot import EventMsg
-from iotbot import FriendMsg
-from iotbot import GroupMsg
+from iotbot import Action, EventMsg, FriendMsg, GroupMsg
 from iotbot import refine_message as refine
 from iotbot.decorators import not_botself
-from iotbot.sugar import Picture
-from iotbot.sugar import Text
+from iotbot.sugar import Picture, Text
 
 # refine_?函数只是方便解析一些消息变化的部分
 # 一般用在`事件`消息上，因为每个事件都有很多不同的数据
@@ -59,13 +55,12 @@ def receive_events(ctx: EventMsg):
             if shut_ctx.ShutTime == 0:  # 为0是解除
                 msg = '{}被解除禁言了'.format(shut_ctx.UserID)
             else:
-                msg = '{}被禁言了{}分钟, 哈哈哈哈哈'.format(shut_ctx.UserID, shut_ctx.ShutTime / 60)
+                msg = '{}被禁言了{}分钟, 哈哈哈哈哈'.format(
+                    shut_ctx.UserID, shut_ctx.ShutTime / 60
+                )
             print(msg)
             if shut_ctx.UserID != shut_ctx.CurrentQQ:  # 如果不是自己被禁言，就发送给该群消息
-                Action(shut_ctx.CurrentQQ).send_group_text_msg(
-                    shut_ctx.FromUin,
-                    msg
-                )
+                Action(shut_ctx.CurrentQQ).send_group_text_msg(shut_ctx.FromUin, msg)
         else:
             if shut_ctx.ShutTime == 0:
                 print(f'{shut_ctx.FromUin}解除全体禁言')
@@ -78,8 +73,7 @@ def receive_events(ctx: EventMsg):
     join_ctx = refine.refine_group_join_event_msg(ctx)
     if join_ctx is not None:
         Action(join_ctx.CurrentQQ).send_group_text_msg(
-            join_ctx.FromUin,
-            '欢迎 <%s>' % join_ctx.UserName
+            join_ctx.FromUin, '欢迎 <%s>' % join_ctx.UserName
         )
         del join_ctx
         return
@@ -88,8 +82,7 @@ def receive_events(ctx: EventMsg):
     exit_ctx = refine.refine_group_exit_event_msg(ctx)
     if exit_ctx is not None:
         Action(exit_ctx.CurrentQQ).send_group_text_msg(
-            exit_ctx.FromUin,
-            f'群友<{exit_ctx.UserID}>离开了我们'
+            exit_ctx.FromUin, f'群友<{exit_ctx.UserID}>离开了我们'
         )
         del exit_ctx
         return

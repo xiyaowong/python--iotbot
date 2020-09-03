@@ -2,8 +2,7 @@ import os
 from queue import deque
 
 from iotbot import GroupMsg
-from iotbot.decorators import not_botself
-from iotbot.decorators import only_these_groups
+from iotbot.decorators import not_botself, only_these_groups
 from iotbot.sugar import Text
 
 # 连续多少条相同信息时+1

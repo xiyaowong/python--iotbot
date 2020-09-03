@@ -1,9 +1,6 @@
-from typing import Any
-from typing import Callable
+from typing import Any, Callable
 
-from .model import EventMsg
-from .model import FriendMsg
-from .model import GroupMsg
+from .model import EventMsg, FriendMsg, GroupMsg
 
 GroupMsgReceiver = Callable[[GroupMsg], Any]
 FriendMsgReceiver = Callable[[FriendMsg], Any]

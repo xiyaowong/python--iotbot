@@ -8,13 +8,11 @@ from typing import Union
 
 from .action import Action
 from .exceptions import ContextTypeError
-from .model import FriendMsg
-from .model import GroupMsg
+from .model import FriendMsg, GroupMsg
 from .utils import file_to_base64
 
 
-def Text(text: str,
-         at=False):
+def Text(text: str, at=False):
     """发送文字 经支持群消息和好友消息接收函数内调用
     :param text: 文字内容
     :param at:是否艾特发送该消息的用户
@@ -39,29 +37,19 @@ def Text(text: str,
 
     if isinstance(ctx, GroupMsg):
         return action.send_group_text_msg(
-            ctx.FromGroupId,
-            content=text,
-            atUser=ctx.FromUserId if at else 0
+            ctx.FromGroupId, content=text, atUser=ctx.FromUserId if at else 0
         )
     if isinstance(ctx, FriendMsg):
         if ctx.TempUin:
             return action.send_private_text_msg(
-                toUser=ctx.FromUin,
-                content=text,
-                groupid=ctx.TempUin
+                toUser=ctx.FromUin, content=text, groupid=ctx.TempUin
             )
         else:
-            return action.send_friend_text_msg(
-                ctx.FromUin,
-                text
-            )
+            return action.send_friend_text_msg(ctx.FromUin, text)
     return None
 
 
-def Picture(pic_url='',
-            pic_base64='',
-            pic_path='',
-            content=''):
+def Picture(pic_url='', pic_base64='', pic_path='', content=''):
     """发送图片 经支持群消息和好友消息接收函数内调用
     :param pic_url: 图片链接
     :param pic_base64: 图片base64编码
@@ -91,21 +79,15 @@ def Picture(pic_url='',
     if isinstance(ctx, GroupMsg):
         if pic_url:
             return action.send_group_pic_msg(
-                ctx.FromGroupId,
-                picUrl=pic_url,
-                content=content
+                ctx.FromGroupId, picUrl=pic_url, content=content
             )
         elif pic_base64:
             return action.send_group_pic_msg(
-                ctx.FromGroupId,
-                picBase64Buf=pic_base64,
-                content=content
+                ctx.FromGroupId, picBase64Buf=pic_base64, content=content
             )
         elif pic_path:
             return action.send_group_pic_msg(
-                ctx.FromGroupId,
-                picBase64Buf=file_to_base64(pic_path),
-                content=content
+                ctx.FromGroupId, picBase64Buf=file_to_base64(pic_path), content=content
             )
     if isinstance(ctx, FriendMsg):
         if pic_url:
@@ -114,13 +96,11 @@ def Picture(pic_url='',
                     toUser=ctx.FromUin,
                     groupid=ctx.TempUin,
                     picUrl=pic_url,
-                    content=content
+                    content=content,
                 )
             else:
                 return action.send_friend_pic_msg(
-                    ctx.FromUin,
-                    picUrl=pic_url,
-                    content=content
+                    ctx.FromUin, picUrl=pic_url, content=content
                 )
         elif pic_base64:
             if ctx.TempUin:
@@ -128,13 +108,11 @@ def Picture(pic_url='',
                     toUser=ctx.FromUin,
                     groupid=ctx.TempUin,
                     picBase64Buf=pic_base64,
-                    content=content
+                    content=content,
                 )
             else:
                 return action.send_friend_pic_msg(
-                    ctx.FromUin,
-                    picBase64Buf=pic_base64,
-                    content=content
+                    ctx.FromUin, picBase64Buf=pic_base64, content=content
                 )
         elif pic_path:
             if ctx.TempUin:
@@ -142,20 +120,16 @@ def Picture(pic_url='',
                     toUser=ctx.FromUin,
                     groupid=ctx.TempUin,
                     picBase64Buf=file_to_base64(pic_path),
-                    content=content
+                    content=content,
                 )
             else:
                 return action.send_friend_pic_msg(
-                    ctx.FromUin,
-                    picBase64Buf=file_to_base64(pic_path),
-                    content=content
+                    ctx.FromUin, picBase64Buf=file_to_base64(pic_path), content=content
                 )
     return None
 
 
-def Voice(voice_url='',
-          voice_base64='',
-          voice_path=''):
+def Voice(voice_url='', voice_base64='', voice_path=''):
     """发送语音 经支持群消息和好友消息接收函数内调用
     :param voice_url: 语音链接
     :param voice_base64: 语音base64编码
@@ -183,74 +157,62 @@ def Voice(voice_url='',
 
     if isinstance(ctx, GroupMsg):
         if voice_url:
-            return action.send_group_voice_msg(
-                ctx.FromGroupId,
-                voiceUrl=voice_url
-            )
+            return action.send_group_voice_msg(ctx.FromGroupId, voiceUrl=voice_url)
         elif voice_base64:
             return action.send_group_voice_msg(
-                ctx.FromGroupId,
-                voiceBase64Buf=voice_base64
+                ctx.FromGroupId, voiceBase64Buf=voice_base64
             )
         elif voice_path:
             return action.send_group_voice_msg(
-                ctx.FromGroupId,
-                voiceBase64Buf=file_to_base64(voice_path)
+                ctx.FromGroupId, voiceBase64Buf=file_to_base64(voice_path)
             )
     if isinstance(ctx, FriendMsg):
         if voice_url:
             if ctx.TempUin:
                 return action.send_private_voice_msg(
-                    toUser=ctx.FromUin,
-                    groupid=ctx.TempUin,
-                    voiceUrl=voice_url
+                    toUser=ctx.FromUin, groupid=ctx.TempUin, voiceUrl=voice_url
                 )
             else:
-                return action.send_friend_voice_msg(
-                    ctx.FromUin,
-                    voiceUrl=voice_url
-                )
+                return action.send_friend_voice_msg(ctx.FromUin, voiceUrl=voice_url)
         elif voice_base64:
             if ctx.TempUin:
                 return action.send_private_voice_msg(
-                    toUser=ctx.FromUin,
-                    groupid=ctx.TempUin,
-                    voiceBase64Buf=voice_base64
+                    toUser=ctx.FromUin, groupid=ctx.TempUin, voiceBase64Buf=voice_base64
                 )
             else:
                 return action.send_friend_voice_msg(
-                    ctx.FromUin,
-                    voiceBase64Buf=voice_base64
+                    ctx.FromUin, voiceBase64Buf=voice_base64
                 )
         elif voice_path:
             if ctx.TempUin:
                 return action.send_private_voice_msg(
                     toUser=ctx.FromUin,
                     groupid=ctx.TempUin,
-                    voiceBase64Buf=file_to_base64(voice_path)
+                    voiceBase64Buf=file_to_base64(voice_path),
                 )
             else:
                 return action.send_friend_voice_msg(
-                    ctx.FromUin,
-                    voiceBase64Buf=file_to_base64(voice_path)
+                    ctx.FromUin, voiceBase64Buf=file_to_base64(voice_path)
                 )
     return None
 
 
-def Send(ctx: Union[FriendMsg, GroupMsg],
-         *,
-         text: str = '',
-         pic_url: str = '',
-         pic_base64: str = '',
-         pic_path: str = '',
-         voice_url: str = '',
-         voice_base64: str = '',
-         voice_path: str = ''):
-    '''
+def Send(
+    ctx: Union[FriendMsg, GroupMsg],
+    *,
+    text: str = '',
+    pic_url: str = '',
+    pic_base64: str = '',
+    pic_path: str = '',
+    voice_url: str = '',
+    voice_base64: str = '',
+    voice_path: str = ''
+):
+    """
     根据给定参数自动选择发送方式, 支持对群聊、好友(包括私聊)
     所有参数均为可选参数
     图片和语音支持的三种参数类型，分别三选一，如果传入多个则优先级为: url > base64 > path
-    '''
+    """
     assert isinstance(ctx, (FriendMsg, GroupMsg))
     if text:
         Text(text)

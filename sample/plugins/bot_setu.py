@@ -28,5 +28,7 @@ def receive_group_msg(ctx: GroupMsg):
         if info['count'] == 0:
             Text('没有没有，不要问了，没有!')
         else:
-            Picture('https://cdn.jsdelivr.net/gh/laosepi/setu/pics_original/'
-                    + info['data'][0]['filename'])
+            Picture(
+                'https://cdn.jsdelivr.net/gh/laosepi/setu/pics_original/'
+                + info['data'][0]['filename']
+            )

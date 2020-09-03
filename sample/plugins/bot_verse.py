@@ -1,9 +1,7 @@
 import requests
 
-from iotbot import Action
-from iotbot import GroupMsg
-from iotbot.decorators import equal_content
-from iotbot.decorators import not_botself
+from iotbot import Action, GroupMsg
+from iotbot.decorators import equal_content, not_botself
 from iotbot.sugar import Text
 
 # 推荐用lua写

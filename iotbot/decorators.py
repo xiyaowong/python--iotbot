@@ -1,8 +1,7 @@
 import functools
 import re
 
-from .model import FriendMsg
-from .model import GroupMsg
+from .model import FriendMsg, GroupMsg
 
 
 def in_content(string: str):
@@ -10,13 +9,16 @@ def in_content(string: str):
     接受消息content字段含有指定消息时, 不支持事件类型消息
     :param string: 支持正则
     """
+
     def deco(func):
         def inner(ctx):
             if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if re.findall(string, ctx.Content):
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
@@ -24,13 +26,16 @@ def equal_content(string: str):
     """
     content字段与指定消息相等时, 不支持事件类型消息
     """
+
     def deco(func):
         def inner(ctx):
             if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if ctx.Content == string:
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
@@ -48,6 +53,7 @@ def not_botself(func=None):
             if userid != ctx.CurrentQQ:
                 return func(ctx)
         return None
+
     return inner
 
 
@@ -65,13 +71,15 @@ def is_botself(func=None):
             if userid == ctx.CurrentQQ:
                 return func(ctx)
         return None
+
     return inner
 
 
-def not_these_users(users: list):
+def not_these_users(users: list):  # pylint:disable=W0613
     """不接受这些人的消息
     :param users: qq号列表
     """
+
     def deco(func):
         def inner(ctx):
             nonlocal users
@@ -85,14 +93,17 @@ def not_these_users(users: list):
                 if from_user not in users:
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
-def only_these_users(users: list):
+def only_these_users(users: list):  # pylint:disable=W0613
     """仅接受这些人的消息
     :param users: qq号列表
     """
+
     def deco(func):
         def inner(ctx):
             nonlocal users
@@ -106,7 +117,9 @@ def only_these_users(users: list):
                 if from_user in users:
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
@@ -114,20 +127,24 @@ def only_this_msg_type(msg_type: str):
     """仅接受该类型消息
     :param msg_type: TextMsg, PicMsg, AtMsg, ReplyMsg, VoiceMsg之一
     """
+
     def deco(func):
         def inner(ctx):
             if isinstance(ctx, (GroupMsg, FriendMsg)):
                 if ctx.MsgType == msg_type:
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
-def not_these_groups(groups: list):
+def not_these_groups(groups: list):  # pylint:disable=W0613
     """不接受这些群组的消息
     :param groups: 群号列表
     """
+
     def deco(func):
         def inner(ctx):
             nonlocal groups
@@ -138,14 +155,17 @@ def not_these_groups(groups: list):
                 if from_group not in groups:
                     return func(ctx)
             return None
+
         return inner
+
     return deco
 
 
-def only_these_groups(groups: list):
+def only_these_groups(groups: list):  # pylint:disable=W0613
     """只接受这些群组的消息
     :param groups: 群号列表
     """
+
     def deco(func):
         def inner(ctx):
             nonlocal groups
@@ -156,5 +176,7 @@ def only_these_groups(groups: list):
                 if from_group in groups:
                     return func(ctx)
             return None
+
         return inner
+
     return deco

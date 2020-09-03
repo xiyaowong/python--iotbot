@@ -17,7 +17,8 @@ def cli():
         file = f'bot_{plug_name}.py'
         if input(f'将生成{file}，这是覆盖写操作，确定？ y/N ').lower() == 'y':
             with open(file, 'w', encoding='utf-8') as f:
-                f.write("""from iotbot import Action, FriendMsg, GroupMsg, EventMsg
+                f.write(
+                    """from iotbot import Action, FriendMsg, GroupMsg, EventMsg
 
 
 # 下面三个函数名不能改，否则不会调用
@@ -31,14 +32,17 @@ def receive_friend_msg(ctx: FriendMsg):
 
 def receive_events(ctx: EventMsg):
     Action(ctx.CurrentQQ)
-    """)
+    """
+                )
             print('OK!')
             return
         else:
             print('bye~')
             return
 
-    template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template.py')
+    template_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), 'template.py'
+    )
 
     c = input(f'将创建{fileName}.py文件, 机器人QQ为：{qq}。是否确定？ y/N: ')
     if c.lower() == 'y':
@@ -52,11 +56,13 @@ def receive_events(ctx: EventMsg):
 
         print()
         print('创建成功~')
-        print(f"""
+        print(
+            f"""
 执行如下命令：python {fileName}.py
 
 在机器人所在的群或私聊机器人发送：.test
-""")
+"""
+        )
     else:
         print('已取消操作')
 

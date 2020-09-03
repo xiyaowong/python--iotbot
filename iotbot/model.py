@@ -41,7 +41,7 @@ class FriendMsg:
         self.RedBaginfo: dict = self.data.get('RedBaginfo')
 
         # 私聊(临时会话)特有
-        self.TempUin: int = self.data.get('TempUin')  #入口群聊ID
+        self.TempUin: int = self.data.get('TempUin')  # 入口群聊ID
 
     def __getitem__(self, key):
         return self.message[key]
@@ -70,8 +70,4 @@ class EventMsg:
         return self.message[key]
 
 
-model_map = {
-    'OnGroupMsgs': GroupMsg,
-    'OnFriendMsgs': FriendMsg,
-    'OnEvents': EventMsg
-}
+model_map = {'OnGroupMsgs': GroupMsg, 'OnFriendMsgs': FriendMsg, 'OnEvents': EventMsg}

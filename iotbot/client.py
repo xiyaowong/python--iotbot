@@ -3,23 +3,16 @@ import sys
 import time
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable
-from typing import List
-from typing import Union
+from typing import Callable, List, Union
 
 import socketio
 from schedule import Scheduler as _Scheduler
 
 from .config import config
 from .logger import logger
-from .model import EventMsg
-from .model import FriendMsg
-from .model import GroupMsg
-from .model import model_map
+from .model import EventMsg, FriendMsg, GroupMsg, model_map
 from .plugin import PluginManager
-from .typing import EventMsgReceiver
-from .typing import FriendMsgReceiver
-from .typing import GroupMsgReceiver
+from .typing import EventMsgReceiver, FriendMsgReceiver, GroupMsgReceiver
 
 
 def _deco_creater(bind_type):
@@ -30,6 +23,7 @@ def _deco_creater(bind_type):
             self.add_friend_msg_receiver(func)
         else:
             self.add_event_receiver(func)
+
     return deco
 
 
@@ -47,16 +41,18 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     :param host: ip，需要包含schema
     """
 
-    def __init__(self,
-                 qq: Union[int, List[int]],
-                 use_plugins: bool = False,
-                 plugin_dir: str = 'plugins',
-                 group_blacklist: List[int] = None,
-                 friend_blacklist: List[int] = None,
-                 log: bool = True,
-                 log_file: bool = True,
-                 port: int = 8888,
-                 host: str = 'http://127.0.0.1'):
+    def __init__(
+        self,
+        qq: Union[int, List[int]],
+        use_plugins: bool = False,
+        plugin_dir: str = 'plugins',
+        group_blacklist: List[int] = None,
+        friend_blacklist: List[int] = None,
+        log: bool = True,
+        log_file: bool = True,
+        port: int = 8888,
+        host: str = 'http://127.0.0.1',
+    ):
         if isinstance(qq, Sequence):
             self.qq = list(qq)
         else:
@@ -77,7 +73,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                     './logs/{time}.log',
                     format='{time:YYYY-MM-DD HH:mm} {level}\t{message}',
                     rotation='1 day',
-                    encoding='utf-8'
+                    encoding='utf-8',
                 )
         else:
             logger.disable(__name__)
@@ -93,6 +89,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         # webhook 里的消息接收函数，是特例
         if config.webhook:
             from . import webhook  # pylint:disable=import-outside-toplevel
+
             # 直接加载进 `hand`
             self.__friend_msg_receivers_from_hand.append(webhook.receive_friend_msg)
             self.__group_msg_receivers_from_hand.append(webhook.receive_group_msg)
@@ -156,6 +153,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     def removed_plugins(self):
         '''已停用的插件名列表'''
         return self.plugMgr.removed_plugins
+
     ########################################################################
 
     # 调度定时任务
@@ -210,26 +208,38 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         # GetWebConn
         for qq in self.qq:
             self.socketio.emit(
-                'GetWebConn', str(qq),
-                callback=lambda x: logger.info(f'GetWebConn -> {qq} => {x}')  # pylint: disable=cell-var-from-loop
+                'GetWebConn',
+                str(qq),
+                callback=lambda x: logger.info(
+                    f'GetWebConn -> {qq} => {x}'  # pylint: disable=cell-var-from-loop
+                ),
             )
 
         # 启动定时任务
         if len(self.scheduler.jobs) != 0:
-            (self.__executor
-             .submit(self._run_padding)
-             .add_done_callback(self.__thread_pool_callback))
+            self.__executor.submit(self._run_padding).add_done_callback(
+                self.__thread_pool_callback
+            )
 
     @property
     def receivers(self):
         '''消息处理函数数量'''
         return {
-            'friend': len((*self.plugMgr.friend_msg_receivers,
-                           *self.__friend_msg_receivers_from_hand)),
-            'group': len((*self.plugMgr.group_msg_receivers,
-                          *self.__group_msg_receivers_from_hand)),
-            'event': len((*self.plugMgr.event_receivers,
-                          *self.__event_receivers_from_hand))
+            'friend': len(
+                (
+                    *self.plugMgr.friend_msg_receivers,
+                    *self.__friend_msg_receivers_from_hand,
+                )
+            ),
+            'group': len(
+                (
+                    *self.plugMgr.group_msg_receivers,
+                    *self.__group_msg_receivers_from_hand,
+                )
+            ),
+            'event': len(
+                (*self.plugMgr.event_receivers, *self.__event_receivers_from_hand)
+            ),
         }
 
     @receivers.setter
@@ -242,15 +252,23 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def __refresh_executor(self):
         # 根据消息接收函数数量初始化线程池
-        self.__executor = ThreadPoolExecutor(max_workers=min(50, len([  # 减小数量，控制消息频率
-            *self.plugMgr.friend_msg_receivers,
-            *self.__friend_msg_receivers_from_hand,
-            *self.plugMgr.group_msg_receivers,
-            *self.__group_msg_receivers_from_hand,
-            *self.plugMgr.event_receivers,
-            *self.__event_receivers_from_hand,
-            *range(3)
-        ]) * 2))
+        self.__executor = ThreadPoolExecutor(
+            max_workers=min(
+                50,
+                len(
+                    [  # 减小数量，控制消息频率
+                        *self.plugMgr.friend_msg_receivers,
+                        *self.__friend_msg_receivers_from_hand,
+                        *self.plugMgr.group_msg_receivers,
+                        *self.__group_msg_receivers_from_hand,
+                        *self.plugMgr.event_receivers,
+                        *self.__event_receivers_from_hand,
+                        *range(3),
+                    ]
+                )
+                * 2,
+            )
+        )
 
     # 手动添加
     def add_group_msg_receiver(self, func: GroupMsgReceiver):
@@ -269,42 +287,54 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     # context distributor
     ########################################################################
     def __friend_context_distributor(self, context: FriendMsg):
-        for f_receiver in [*self.__friend_msg_receivers_from_hand,
-                           *self.plugMgr.friend_msg_receivers]:
-            (self.__executor
-             .submit(f_receiver, copy.deepcopy(context))
-             .add_done_callback(self.__thread_pool_callback))
+        for f_receiver in [
+            *self.__friend_msg_receivers_from_hand,
+            *self.plugMgr.friend_msg_receivers,
+        ]:
+            self.__executor.submit(
+                f_receiver, copy.deepcopy(context)
+            ).add_done_callback(self.__thread_pool_callback)
 
     def __group_context_distributor(self, context: GroupMsg):
-        for g_receiver in [*self.__group_msg_receivers_from_hand,
-                           *self.plugMgr.group_msg_receivers]:
-            (self.__executor
-             .submit(g_receiver, copy.deepcopy(context))
-             .add_done_callback(self.__thread_pool_callback))
+        for g_receiver in [
+            *self.__group_msg_receivers_from_hand,
+            *self.plugMgr.group_msg_receivers,
+        ]:
+            self.__executor.submit(
+                g_receiver, copy.deepcopy(context)
+            ).add_done_callback(self.__thread_pool_callback)
 
     def __event_context_distributor(self, context: EventMsg):
-        for e_receiver in [*self.__event_receivers_from_hand,
-                           *self.plugMgr.event_receivers]:
-            (self.__executor
-             .submit(e_receiver, copy.deepcopy(context))
-             .add_done_callback(self.__thread_pool_callback))
+        for e_receiver in [
+            *self.__event_receivers_from_hand,
+            *self.plugMgr.event_receivers,
+        ]:
+            self.__executor.submit(
+                e_receiver, copy.deepcopy(context)
+            ).add_done_callback(self.__thread_pool_callback)
 
     ########################################################################
     # register context middleware
     ########################################################################
-    def register_friend_context_middleware(self, middleware: Callable[[FriendMsg], FriendMsg]):
+    def register_friend_context_middleware(
+        self, middleware: Callable[[FriendMsg], FriendMsg]
+    ):
         """注册好友消息中间件"""
         if self.__friend_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(friend)')
         self.__friend_context_middleware = middleware
 
-    def register_group_context_middleware(self, middleware: Callable[[GroupMsg], GroupMsg]):
+    def register_group_context_middleware(
+        self, middleware: Callable[[GroupMsg], GroupMsg]
+    ):
         """注册群消息中间件"""
         if self.__group_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(group)')
         self.__group_context_middleware = middleware
 
-    def register_event_context_middleware(self, middleware: Callable[[EventMsg], EventMsg]):
+    def register_event_context_middleware(
+        self, middleware: Callable[[EventMsg], EventMsg]
+    ):
         """注册事件消息中间件"""
         if self.__event_context_middleware is not None:
             raise Exception('Cannot register more than one middleware(event)')
@@ -359,6 +389,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.socketio.on('OnGroupMsgs')(self.__group_msg_handler)
         self.socketio.on('OnFriendMsgs')(self.__friend_msg_handler)
         self.socketio.on('OnEvents')(self.__event_msg_handler)
+
     ###########################################################################
     # decorators
     on_group_msg = _deco_creater('OnGroupMsgs')
@@ -367,7 +398,5 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def __repr__(self):
         return 'IOTBOT <{}> <host-{}> <port-{}>'.format(
-            " ".join([str(i) for i in self.qq]),
-            self.host,
-            self.port
+            " ".join([str(i) for i in self.qq]), self.host, self.port
         )

@@ -4,10 +4,8 @@
 import base64
 import io
 
-from iotbot import FriendMsg
-from iotbot import GroupMsg
-from iotbot.decorators import in_content
-from iotbot.decorators import not_botself
+from iotbot import FriendMsg, GroupMsg
+from iotbot.decorators import in_content, not_botself
 from iotbot.sugar import Picture
 
 try:

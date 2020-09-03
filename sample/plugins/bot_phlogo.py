@@ -2,12 +2,11 @@
 import base64
 import io
 
+from PIL import Image, ImageDraw, ImageFont
+
 from iotbot import GroupMsg
 from iotbot.decorators import not_botself
 from iotbot.sugar import Picture
-from PIL import Image
-from PIL import ImageDraw
-from PIL import ImageFont
 
 LEFT_PART_VERTICAL_BLANK_MULTIPLY_FONT_HEIGHT = 2
 LEFT_PART_HORIZONTAL_BLANK_MULTIPLY_FONT_WIDTH = 1 / 4
@@ -20,7 +19,7 @@ LEFT_TEXT_COLOR = '#FFFFFF'
 RIGHT_TEXT_COLOR = '#000000'
 FONT_SIZE = 50
 
-FONT_PATH = 'ArialEnUnicodeBold.ttf' # TODO:
+FONT_PATH = 'ArialEnUnicodeBold.ttf'  # TODO:
 
 
 def create_left_part_img(text: str, font_size: int, type_='h'):
@@ -31,7 +30,9 @@ def create_left_part_img(text: str, font_size: int, type_='h'):
         blank_height = font_height * 2
     else:
         blank_height = font_height
-    right_blank = int(font_width / len(text) * LEFT_PART_HORIZONTAL_BLANK_MULTIPLY_FONT_WIDTH)
+    right_blank = int(
+        font_width / len(text) * LEFT_PART_HORIZONTAL_BLANK_MULTIPLY_FONT_WIDTH
+    )
     img_height = font_height + offset_y + blank_height * 2
     image_width = font_width + right_blank
     image_size = image_width, img_height
@@ -47,7 +48,9 @@ def create_right_part_img(text: str, font_size: int):
     font_width, font_height = font.getsize(text)
     offset_y = font.font.getsize(text)[1][1]
     blank_height = font_height * RIGHT_PART_VERTICAL_BLANK_MULTIPLY_FONT_HEIGHT
-    left_blank = int(font_width / len(text) * RIGHT_PART_HORIZONTAL_BLANK_MULTIPLY_FONT_WIDTH)
+    left_blank = int(
+        font_width / len(text) * RIGHT_PART_HORIZONTAL_BLANK_MULTIPLY_FONT_WIDTH
+    )
     image_width = font_width + 2 * left_blank
     image_height = font_height + offset_y + blank_height * 2
     image = Image.new('RGBA', (image_width, image_height), BOX_COLOR)
@@ -57,7 +60,9 @@ def create_right_part_img(text: str, font_size: int):
     # 圆
     magnify_time = 10
     magnified_radii = radii * magnify_time
-    circle = Image.new('L', (magnified_radii * 2, magnified_radii * 2), 0)  # 创建一个黑色背景的画布
+    circle = Image.new(
+        'L', (magnified_radii * 2, magnified_radii * 2), 0
+    )  # 创建一个黑色背景的画布
     draw = ImageDraw.Draw(circle)
     draw.ellipse((0, 0, magnified_radii * 2, magnified_radii * 2), fill=255)  # 画白色圆形
 
@@ -66,18 +71,31 @@ def create_right_part_img(text: str, font_size: int):
     magnified_alpha_height = image_height * magnify_time
     alpha = Image.new('L', (magnified_alpha_width, magnified_alpha_height), 255)
     alpha.paste(circle.crop((0, 0, magnified_radii, magnified_radii)), (0, 0))  # 左上角
-    alpha.paste(circle.crop((magnified_radii, 0, magnified_radii * 2, magnified_radii)),
-                (magnified_alpha_width - magnified_radii, 0))  # 右上角
-    alpha.paste(circle.crop((magnified_radii, magnified_radii, magnified_radii * 2, magnified_radii * 2)),
-                (magnified_alpha_width - magnified_radii, magnified_alpha_height - magnified_radii))  # 右下角
-    alpha.paste(circle.crop((0, magnified_radii, magnified_radii, magnified_radii * 2)),
-                (0, magnified_alpha_height - magnified_radii))  # 左下角
+    alpha.paste(
+        circle.crop((magnified_radii, 0, magnified_radii * 2, magnified_radii)),
+        (magnified_alpha_width - magnified_radii, 0),
+    )  # 右上角
+    alpha.paste(
+        circle.crop(
+            (magnified_radii, magnified_radii, magnified_radii * 2, magnified_radii * 2)
+        ),
+        (
+            magnified_alpha_width - magnified_radii,
+            magnified_alpha_height - magnified_radii,
+        ),
+    )  # 右下角
+    alpha.paste(
+        circle.crop((0, magnified_radii, magnified_radii, magnified_radii * 2)),
+        (0, magnified_alpha_height - magnified_radii),
+    )  # 左下角
     alpha = alpha.resize((image_width, image_height), Image.ANTIALIAS)
     image.putalpha(alpha)
     return image
 
 
-def combine_img_horizontal(left_text: str, right_text, font_size: int = FONT_SIZE) -> str:
+def combine_img_horizontal(
+    left_text: str, right_text, font_size: int = FONT_SIZE
+) -> str:
     left_img = create_left_part_img(left_text, font_size)
     right_img = create_right_part_img(right_text, font_size)
     blank = 30
@@ -85,7 +103,11 @@ def combine_img_horizontal(left_text: str, right_text, font_size: int = FONT_SIZ
     bg_img_height = left_img.height
     bg_img = Image.new('RGBA', (bg_img_width, bg_img_height), BG_COLOR)
     bg_img.paste(left_img, (blank, 0))
-    bg_img.paste(right_img, (blank + left_img.width, int((bg_img_height - right_img.height) / 2)), mask=right_img)
+    bg_img.paste(
+        right_img,
+        (blank + left_img.width, int((bg_img_height - right_img.height) / 2)),
+        mask=right_img,
+    )
     buffer = io.BytesIO()
     bg_img.save(buffer, format='png')
     return base64.b64encode(buffer.getvalue()).decode()
@@ -99,7 +121,11 @@ def combine_img_vertical(left_text: str, right_text, font_size: int = FONT_SIZE)
     bg_img_height = left_img.height + right_img.height + blank * 2
     bg_img = Image.new('RGBA', (bg_img_width, bg_img_height), BG_COLOR)
     bg_img.paste(left_img, (int((bg_img_width - left_img.width) / 2), blank))
-    bg_img.paste(right_img, (int((bg_img_width - right_img.width) / 2), blank + left_img.height), mask=right_img)
+    bg_img.paste(
+        right_img,
+        (int((bg_img_width - right_img.width) / 2), blank + left_img.height),
+        mask=right_img,
+    )
     buffer = io.BytesIO()
     bg_img.save(buffer, format='png')
     return base64.b64encode(buffer.getvalue()).decode()

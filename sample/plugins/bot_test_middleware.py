@@ -1,5 +1,5 @@
-from iotbot.sugar import Text
 from iotbot.decorators import equal_content
+from iotbot.sugar import Text
 
 # 下面三个函数名不能改，否则不会调用
 # 但是都是可选项，建议把不需要用到的函数删除，节约资源
