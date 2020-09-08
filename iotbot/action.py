@@ -668,6 +668,32 @@ class Action:  # pylint:disable=too-many-instance-attributes
                 logger.error('base64获取失败')
         return ''
 
+    def get_schedules(self, **kwargs) -> dict:
+        """获取定时任务总数
+        response {"Crons": "任务总数0\n", "Ret": 0}
+        """
+        return self.baseSender('GET', 'GetCrons', **kwargs)
+
+    def add_schedules(self, Sepc: str, FileName: str, FuncName: str, **kwargs) -> dict:
+        """添加定时任务
+        :param sepc: cron表达式
+        :param FileName: 执行的lua文件名
+        :param FuncName: 指定在该lua文件下的方法
+        """
+        data = {
+            "QQ": str(self.qq),  # 执行任务的机器人
+            "Sepc": Sepc,  # cron表达式 每5秒执行一次
+            "FileName": FileName,  # 执行的lua文件名
+            "FuncName": FuncName,  # 执行的lua文件名下的TaskTwo方法名
+        }
+        return self.baseSender('POST', 'AddCrons', data, **kwargs)
+
+    def del_schedules(self, TaskID: int, **kwargs) -> dict:
+        """删除定时任务
+        :param TaskID: 任务ID
+        """
+        return self.baseSender('POST', 'DelCrons', {'TaskID': TaskID}, **kwargs)
+
     def baseSender(
         self,
         method: str,
