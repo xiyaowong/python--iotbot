@@ -6,6 +6,7 @@
 - [配置](CONFIG.md)
 - [插件](PLUGIN.md)
 - [接收函数装饰器](DECORATORS.md)
+- [构建宏](MACRO.md)
 - [Web Hook](WEBHOOK.md)
 - [定时任务](SCHEDULER.md)
 - [脚手架](SCAFFOLD.md)

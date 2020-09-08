@@ -22,6 +22,7 @@ github.com/xiyaowong/python-iotbot
         bot.run()
 """
 
+from . import refine as refine_message  # 兼容旧版本，以后可能删除
 from .action import Action
 from .client import IOTBOT
 from .model import EventMsg, FriendMsg, GroupMsg

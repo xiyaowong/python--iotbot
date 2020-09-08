@@ -18,6 +18,7 @@ Welcome to python-iotbot's documentation!
    CONFIG
    PLUGIN
    DECORATORS
+   MACRO
    WEBHOOK
    SCHEDULER
    SCAFFOLD

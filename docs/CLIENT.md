@@ -83,10 +83,11 @@ ctx.TempUin 是发起该临时会话的入口群聊的 id, 其他的数据请自
 提取这些数据，如果是好友和群消息，不会特别麻烦，但如果处理含有特别多不同字段的事件类型的消息那就....
 很明显这是一个常用操作，为了避免重复劳动，所以提供了一系列 `refine_?` 函数用来进一步解析数据。
 
-refine 函数位于库的`refine_message`模块中
+refine
+函数位于库的`refine_message`模块中,**现在是 refine 模块，refine_message 还可用，但之后可能取消删除**
 
 ```python
-from iotbot.refine_message import *
+from iotbot.refine import *
 # 按需导入
 ```
 

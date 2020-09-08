@@ -4,6 +4,20 @@
 
 ## 作用一览
 
+### not_botself
+
+```python
+def not_botself():
+    """忽略机器人自身的消息"""
+```
+
+### is_botself
+
+```python
+def is_botself():
+    """只要机器人自身的消息"""
+```
+
 ### in_content
 
 ```python
@@ -27,9 +41,18 @@ def equal_content(string: str):
 
 ```python
 def not_these_users(users: list):
-     """仅接受这些人的消息
-     :param users: qq号列表
-     """
+"""仅接受这些人的消息
+:param users: qq 号列表
+"""
+```
+
+### only_these_users
+
+```python
+def only_these_users(users: list):
+"""仅接受这些人的消息
+:param users: qq 号列表
+"""
 ```
 
 ### only_this_msg_type

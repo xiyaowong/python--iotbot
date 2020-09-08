@@ -18,6 +18,7 @@ from typing import Callable, Generator, List, Union
 import requests
 from requests.exceptions import Timeout
 
+from . import macro
 from .client import IOTBOT
 from .config import config
 from .logger import logger
@@ -138,7 +139,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "TextMsg",
             "content": content,
             "groupid": 0,
-            "atUser": 0,
             "replayInfo": None,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
@@ -159,7 +159,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "VoiceMsg",
             "content": "",
             "groupid": 0,
-            "atUser": 0,
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf,
         }
@@ -171,7 +170,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
         content='',
         picUrl='',
         picBase64Buf='',
-        fileMd5='',
+        fileMd5: List[str] = None,
         flashPic=False,
         timeout=5,
         **kwargs,
@@ -183,7 +182,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "PicMsg",
             "content": content,
             "groupid": 0,
-            "atUser": 0,
             "picUrl": picUrl,
             "picBase64Buf": picBase64Buf,
             "fileMd5": fileMd5,
@@ -192,16 +190,22 @@ class Action:  # pylint:disable=too-many-instance-attributes
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
     def send_group_text_msg(
-        self, toUser: int, content='', atUser=0, timeout=5, **kwargs
+        self,
+        toUser: int,
+        content='',
+        atUser: Union[int, List[int]] = 0,
+        timeout=5,
+        **kwargs,
     ) -> dict:
         """发送群文字消息"""
+        if atUser != 0:
+            content = macro.atUser(atUser) + content
         data = {
             "toUser": toUser,
             "sendToType": 2,
             "sendMsgType": "TextMsg",
             "content": content,
             "groupid": 0,
-            "atUser": atUser,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
@@ -215,7 +219,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "VoiceMsg",
             "content": '',
             "groupid": 0,
-            "atUser": 0,
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf,
         }
@@ -226,33 +229,29 @@ class Action:  # pylint:disable=too-many-instance-attributes
         toUser: int,
         picUrl='',
         flashPic=False,
-        atUser=0,
+        atUser: Union[int, List[int]] = 0,
         content='',
         picBase64Buf='',
-        fileMd5='',
+        fileMd5: List[str] = None,  # 多图
         timeout=5,
         **kwargs,
     ) -> dict:
         """发送群图片
         Tips:
             [秀图id] 各id对应效果
-            40000   秀图
-            40001   幻影
-            40002   抖动
-            40003   生日
-            40004   爱你
-            40005   征友
-            40006   无(只显示大图无特效)
+            40000 秀图  40001 幻影  40002 抖动 40003 生日
+            40004 爱你  40005 征友  40006 无(只显示大图无特效)
 
             [PICFLAG] 改变图文消息顺序
         """
+        if atUser != 0:
+            content = macro.atUser(atUser) + content
         data = {
             "toUser": toUser,
             "sendToType": 2,
             "sendMsgType": "PicMsg",
             "content": content,
             "groupid": 0,
-            "atUser": atUser,
             "picUrl": picUrl,
             "picBase64Buf": picBase64Buf,
             "fileMd5": fileMd5,
@@ -270,7 +269,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "TextMsg",
             "content": content,
             "groupid": groupid,
-            "atUser": 0,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
@@ -284,7 +282,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "VoiceMsg",
             "content": "",
             "groupid": groupid,
-            "atUser": 0,
             "voiceUrl": voiceUrl,
             "voiceBase64Buf": voiceBase64Buf,
         }
@@ -297,7 +294,7 @@ class Action:  # pylint:disable=too-many-instance-attributes
         picUrl='',
         picBase64Buf='',
         content='',
-        fileMd5='',
+        fileMd5: List[str] = None,
         timeout=10,
         **kwargs,
     ) -> dict:
@@ -308,16 +305,13 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "PicMsg",
             "content": content,
             "groupid": groupid,
-            "atUser": 0,
             "picUrl": picUrl,
             "picBase64Buf": picBase64Buf,
             "fileMd5": fileMd5,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_json_msg(
-        self, toUser: int, content='', atUser=0, timeout=5, **kwargs
-    ) -> dict:
+    def send_group_json_msg(self, toUser: int, content='', timeout=5, **kwargs) -> dict:
         """发送群Json类型信息
         :param content: 可以为json文本，或者字典类型
         """
@@ -329,13 +323,10 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "JsonMsg",
             "content": content,
             "groupid": 0,
-            "atUser": atUser,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
-    def send_group_xml_msg(
-        self, toUser: int, content='', atUser=0, timeout=5, **kwargs
-    ) -> dict:
+    def send_group_xml_msg(self, toUser: int, content='', timeout=5, **kwargs) -> dict:
         """发送群Xml类型信息"""
         data = {
             "toUser": toUser,
@@ -343,7 +334,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "XmlMsg",
             "content": content,
             "groupid": 0,
-            "atUser": atUser,
         }
         return self.baseSender('POST', 'SendMsg', data, timeout, **kwargs)
 
@@ -643,7 +633,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "ForwordMsg",
             "content": "",
             "groupid": 0,
-            "atUser": 0,
             "forwordBuf": forwordBuf,
             "forwordField": 19,
         }
@@ -659,7 +648,6 @@ class Action:  # pylint:disable=too-many-instance-attributes
             "sendMsgType": "ForwordMsg",
             "content": "",
             "groupid": 0,
-            "atUser": 0,
             "forwordBuf": forwordBuf,
             "forwordField": 19,
         }
