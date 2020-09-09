@@ -1,9 +1,11 @@
 import copy
+import functools
 import sys
 import time
+import traceback
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
-from typing import Callable, List, Union
+from typing import Callable, List, Tuple, Union
 
 import socketio
 from schedule import Scheduler as _Scheduler
@@ -106,6 +108,12 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             self.plugMgr.load_plugins()
             print(self.plugin_status)
 
+        # 当连接上或断开连接运行的函数
+        # 如果通过装饰器注册了, 这两个字段设置成(func, every_time)
+        # func 是需要执行的函数， every_time 表示是否每一次连接或断开都会执行
+        self.__when_connected_do: Tuple[Callable, bool] = None
+        self.__when_disconnected_do: Tuple[Callable, bool] = None
+
         # 依次各种初始化
         self.__initialize_socketio()
         self.__refresh_executor()
@@ -155,8 +163,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         return self.plugMgr.removed_plugins
 
     ########################################################################
-
-    # 调度定时任务
+    # for scheduler
+    ########################################################################
     def _run_padding(self):
         logger.info(f'{len(self.scheduler.jobs)} tasks that are scheduled to run.')
         while True:
@@ -184,26 +192,26 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                     return
                 time.sleep(delay)
 
-    def run(self):
-        logger.info('Connecting to the server...')
-        try:
-            self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
-        except Exception:
-            logger.exception('连接失败')
-            self.__executor.shutdown(False)
-            self._exit = True
-            sys.exit(1)
-        else:
-            try:
-                self.socketio.wait()
-            except KeyboardInterrupt:
-                self.__executor.shutdown(wait=False)
-                self._exit = True
-                print('\nbye~')
-                sys.exit(0)
+    ##########################################################################
+    # decorators for registering hook function when connected or disconnected
+    ##########################################################################
+    def when_connected(self, func: Callable = None, *, every_time=False):
+        if func is None:
+            return functools.partial(self.when_connected, every_time=every_time)
+        self.__when_connected_do = (func, every_time)
+        return None
 
+    def when_disconnected(self, func: Callable = None, *, every_time=False):
+        if func is None:
+            return functools.partial(self.when_disconnected, every_time=every_time)
+        self.__when_disconnected_do = (func, every_time)
+        return None
+
+    ########################################################################
+    # about socketio
+    ########################################################################
     def connect(self):
-        logger.success('Connected to server successfully!')
+        logger.success('Connected to the server successfully!')
 
         # GetWebConn
         for qq in self.qq:
@@ -216,10 +224,93 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             )
 
         # 启动定时任务
-        if len(self.scheduler.jobs) != 0:
+        if len(self.scheduler.jobs) != 0 and not getattr(
+            # 服务端断线之后，socketio会自动重连，此时线程池没有关，重连成功后
+            # connect 函数会被重新调用，所以加一层判断，防止重复添加定时任务
+            self.scheduler,
+            'started',
+            False,
+        ):
             self.__executor.submit(self._run_padding).add_done_callback(
                 self.__thread_pool_callback
             )
+            self.scheduler.started = True
+
+        # 连接成功执行用户定义的函数，如果有
+        if self.__when_connected_do is not None:
+            self.__when_connected_do[0]()
+            if not self.__when_connected_do[1]:  # 如果不需要每次运行，这里运行一次后就废弃设定的函数
+                self.__when_connected_do = None
+
+    def disconnect(self):
+        logger.warning('Disconnected to the server!')
+        # 断开连接后执行用户定义的函数，如果有
+        if self.__when_disconnected_do is not None:
+            self.__when_disconnected_do[0]()
+            if not self.__when_disconnected_do[1]:
+                self.__when_disconnected_do = None
+
+    def __initialize_socketio(self):
+        self.socketio = socketio.Client()
+        self.socketio.event()(self.connect)
+        self.socketio.event()(self.disconnect)
+
+    def close(self, status=0):
+        self.socketio.disconnect()
+        self.__executor.shutdown(wait=False)
+        self._exit = True
+        sys.exit(status)
+
+    def run(self):
+        logger.info('Connecting to the server...')
+        try:
+            self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
+        except Exception:
+            logger.error(traceback.format_exc())
+            self.close(1)
+        else:
+            try:
+                self.socketio.wait()
+            except KeyboardInterrupt:
+                self.close(0)
+
+    ########################################################################
+    # initialize thread pool
+    ########################################################################
+    def __refresh_executor(self):
+        # 根据消息接收函数数量初始化线程池
+        self.__executor = ThreadPoolExecutor(
+            max_workers=min(
+                50,
+                len(
+                    [  # 减小数量，控制消息频率
+                        *self.plugMgr.friend_msg_receivers,
+                        *self.__friend_msg_receivers_from_hand,
+                        *self.plugMgr.group_msg_receivers,
+                        *self.__group_msg_receivers_from_hand,
+                        *self.plugMgr.event_receivers,
+                        *self.__event_receivers_from_hand,
+                        *range(3),
+                    ]
+                )
+                * 2,
+            )
+        )
+
+    ########################################################################
+    # Add message receiver manually
+    ########################################################################
+    def add_group_msg_receiver(self, func: GroupMsgReceiver):
+        '''添加群消息接收函数'''
+        self.__group_msg_receivers_from_hand.append(func)
+
+    def add_friend_msg_receiver(self, func: FriendMsgReceiver):
+        '''添加好友消息接收函数'''
+        self.__friend_msg_receivers_from_hand.append(func)
+
+    def add_event_receiver(self, func: EventMsgReceiver):
+        '''添加事件消息接收函数'''
+        self.__event_receivers_from_hand.append(func)
 
     @property
     def receivers(self):
@@ -241,47 +332,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                 (*self.plugMgr.event_receivers, *self.__event_receivers_from_hand)
             ),
         }
-
-    @receivers.setter
-    def receivers(self, _):
-        logger.warning('The attribute receivers is read-only!')
-
-    def __initialize_socketio(self):
-        self.socketio = socketio.Client()
-        self.socketio.event()(self.connect)
-
-    def __refresh_executor(self):
-        # 根据消息接收函数数量初始化线程池
-        self.__executor = ThreadPoolExecutor(
-            max_workers=min(
-                50,
-                len(
-                    [  # 减小数量，控制消息频率
-                        *self.plugMgr.friend_msg_receivers,
-                        *self.__friend_msg_receivers_from_hand,
-                        *self.plugMgr.group_msg_receivers,
-                        *self.__group_msg_receivers_from_hand,
-                        *self.plugMgr.event_receivers,
-                        *self.__event_receivers_from_hand,
-                        *range(3),
-                    ]
-                )
-                * 2,
-            )
-        )
-
-    # 手动添加
-    def add_group_msg_receiver(self, func: GroupMsgReceiver):
-        '''添加群消息接收函数'''
-        self.__group_msg_receivers_from_hand.append(func)
-
-    def add_friend_msg_receiver(self, func: FriendMsgReceiver):
-        '''添加好友消息接收函数'''
-        self.__friend_msg_receivers_from_hand.append(func)
-
-    def add_event_receiver(self, func: EventMsgReceiver):
-        '''添加事件消息接收函数'''
-        self.__event_receivers_from_hand.append(func)
 
     ########################################################################
     # context distributor

@@ -48,6 +48,32 @@ func 是对应的接收函数, 有自己编写，参数唯一，均为对应消�
 
 在插件部分说明
 
+## 连接或断开连接的钩子函数
+
+有时候会有在连接成功后进行一些配置初始化或断开连接需要执行某些动作的需求，所以提供了两个装饰器可用于设置这两个事件的钩子函数
+
+1. `bot.when_connected` 连接成功后执行
+2. `bot.when_disconnected` 断开连接后执行
+
+```python
+@bot.when_connected
+def connected():
+    print('该函数只在程序启动后第一次连接成功后执行, 不能有参数')
+
+@bot.when_disconnected
+def disconnected():
+    print('该函数只在第一次断开连接后才执行, 不能有参数')
+```
+
+因为有自动重连机制，默认情况下这两个函数都只会执行一次，如果需要每一次连接成功(重连成功)或断开都执行的话，可设置参数`every_time`为`True`
+
+```python
+@bot.when_connected(every_time=True)
+def connected():
+    print('该函数只要连接成功后就会执行一次, 不能有参数')
+    # disconnected 同理
+```
+
 ## 消息上下文对象
 
 接收函数必须有且只有一个参数，这个参数是消息上下文(后面用 ctx 代替)，是将服务端传过来的原始信息处理后的对象。

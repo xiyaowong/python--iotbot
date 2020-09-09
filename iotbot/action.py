@@ -85,7 +85,7 @@ class _SendThread(threading.Thread):
             self.start()
 
 
-class Action:  # pylint:disable=too-many-instance-attributes
+class Action:  # pylint:disable=R0904
     """
     :param qq_or_bot: qq号或者机器人实例(`IOTBOT`)
     :param queue: 是否开启队列，开启后任务将按顺序发送并延时指定时间，此参数与`queue_delay`对应
