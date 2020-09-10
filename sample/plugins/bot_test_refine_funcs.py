@@ -1,7 +1,9 @@
 from iotbot import Action, EventMsg, FriendMsg, GroupMsg
 from iotbot import refine_message as refine
 from iotbot.decorators import not_botself
-from iotbot.sugar import Picture, Text
+from iotbot.sugar import Text
+
+# 2020-09-10注: 部分内容已不适用最新版本框架，api可能有所改变
 
 # refine_?函数只是方便解析一些消息变化的部分
 # 一般用在`事件`消息上，因为每个事件都有很多不同的数据
@@ -24,7 +26,7 @@ def receive_friend_msg(ctx: FriendMsg):
     pic_ctx = refine.refine_pic_friend_msg(ctx)
     if pic_ctx is not None:
         print('----friend------------')
-        Text(pic_ctx.GroupPic[0]['Url'])  # 给他发送刚才图片的链接
+        Text(pic_ctx.FriendPic[0].Url)  # 给他发送刚才图片的链接
         del pic_ctx
         return
     # 好友语音消息
