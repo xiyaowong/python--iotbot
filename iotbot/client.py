@@ -37,9 +37,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
     :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
     :param log: 是否开启日志
-    :param log_file: 是否文件日志
+    :param log_file: 是否输出文件日志
     :param port: 运行端口
-    :param beat_delay: 心跳延时时间（s）
     :param host: ip，需要包含schema
     """
 
