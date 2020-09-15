@@ -121,3 +121,7 @@
 ### 2.7.0
 
 1. 可添加连接成功或断开连接后执行的钩子函数
+
+### 2.7.1
+
+1. [commit](https://github.com/xiyaowong/python--iotbot/commit/78820ac0134d24ae337a64e5c25d2738815c209e)
