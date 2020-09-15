@@ -10,6 +10,7 @@ action = Action(bot)
 # 群消息中间件使用示例
 def group_ctx_middleware(ctx):
     ctx.master = 333  # 主人qq
+    return ctx  # 2.7.1新增，必须返回原来的对象，否则消息永远不会被调用
 
 
 bot.register_group_context_middleware(group_ctx_middleware)

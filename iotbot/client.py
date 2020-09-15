@@ -410,6 +410,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             new_context = self.__friend_context_middleware(context)
             if isinstance(new_context, type(context)):
                 context = new_context
+            else:
+                return
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
@@ -423,6 +425,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             new_context = self.__group_context_middleware(context)
             if isinstance(new_context, type(context)):
                 context = new_context
+            else:
+                return
         self.__executor.submit(self.__group_context_distributor, context)
 
     def __event_msg_handler(self, msg):
@@ -433,6 +437,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             new_context = self.__event_context_middleware(context)
             if isinstance(new_context, type(context)):
                 context = new_context
+            else:
+                return
         self.__executor.submit(self.__event_context_distributor, context)
 
     def __initialize_handlers(self):
