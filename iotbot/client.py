@@ -271,6 +271,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             try:
                 self.socketio.wait()
             except KeyboardInterrupt:
+                pass
+            finally:
                 self.close(0)
 
     ########################################################################

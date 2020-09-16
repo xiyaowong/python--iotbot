@@ -1,7 +1,55 @@
 import functools
 import re
 
+from .utils import MsgTypes
+
+try:
+    import ujson as json
+except ImportError:
+    import json
+
 from .model import FriendMsg, GroupMsg
+from .refine import (
+    _PicFriendMsg,
+    _PicGroupMsg,
+    refine_pic_friend_msg,
+    refine_pic_group_msg
+)
+
+
+def startswith(string: str, trim=True):
+    """content以指定前缀开头时
+    :param string: 前缀字符串
+    :param trim: 是否将原始Content部分替换为裁剪掉前缀的内容
+    """
+
+    def deco(func):
+        def inner(ctx):
+            if isinstance(ctx, (GroupMsg, FriendMsg)):
+                if isinstance(ctx, GroupMsg):
+                    refine_ctx = refine_pic_group_msg(ctx)  # type: _PicGroupMsg
+                else:
+                    refine_ctx = refine_pic_friend_msg(ctx)  # type:_PicFriendMsg
+                content = refine_ctx.Content  # type:str
+                if content.startswith(string):
+                    # 不需要裁剪，直接传入原始ctx
+                    if not trim:
+                        return func(ctx)
+                    # 需要裁剪
+                    # 处理完图片消息中的Content后，需重新编码为字符串，保证传入接收函数ctx一致性
+                    new_content = content[len(string) :]
+                    if ctx.MsgType == MsgTypes.PicMsg:
+                        raw_content_data = json.loads(ctx.Content)
+                        raw_content_data['Content'] = new_content
+                        ctx.Content = json.dumps(raw_content_data, ensure_ascii=False)
+                    else:
+                        ctx.Content = new_content
+                    return func(ctx)
+            return None
+
+        return inner
+
+    return deco
 
 
 def in_content(string: str):
@@ -30,7 +78,11 @@ def equal_content(string: str):
     def deco(func):
         def inner(ctx):
             if isinstance(ctx, (GroupMsg, FriendMsg)):
-                if ctx.Content == string:
+                if isinstance(ctx, GroupMsg):
+                    refine_ctx = refine_pic_group_msg(ctx)
+                else:
+                    refine_ctx = refine_pic_friend_msg(ctx)
+                if refine_ctx.Content == string:
                     return func(ctx)
             return None
 

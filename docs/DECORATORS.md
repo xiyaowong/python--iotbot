@@ -82,7 +82,24 @@ def only_these_groups(groups: list):
     """
 ```
 
+```python
+def startswith(string:str, trim=True):
+    """content以指定前缀开头时
+    :param string: 前缀字符串
+    :param trim: 是否将原始Content部分替换为裁剪掉前缀的内容
+    """
+```
+
 这里没写全，还是那句话，用的时候请看代码提示或查看源码
+
+## 几个说明
+
+1. in_content 与 equal_content
+   有一点不同，in_content 用的是最原始的 Content 字段数据，比如图片消息是 json 格式的字符串；
+   而 equal_content 使用的是将 json 格式数据解码后的 Content,
+   `startswith`装饰器和`equal_content`一样
+2. **对装饰器的具体行为有疑惑的请看源码**
+3. **框架对艾特消息都没有处理，所以编写与艾特有关功能时请仔细考虑装饰器是否适用**
 
 ## 使用示例
 

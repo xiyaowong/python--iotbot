@@ -125,3 +125,8 @@
 ### 2.7.1
 
 1. [commit](https://github.com/xiyaowong/python--iotbot/commit/78820ac0134d24ae337a64e5c25d2738815c209e)
+
+### 2.7.2
+
+1. 增加接收函数装饰器(startswith)
+2. 修改接收函数装饰器`equal_content`逻辑
