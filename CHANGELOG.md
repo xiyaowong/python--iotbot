@@ -130,3 +130,7 @@
 
 1. 增加接收函数装饰器(startswith)
 2. 修改接收函数装饰器`equal_content`逻辑
+
+### 2.7.3
+
+1. 装饰器 equal_content 少一步对 MsgType 的判断
