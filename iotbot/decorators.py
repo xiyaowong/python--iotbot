@@ -1,3 +1,4 @@
+import copy
 import functools
 import re
 
@@ -78,11 +79,14 @@ def equal_content(string: str):
     def deco(func):
         def inner(ctx):
             if isinstance(ctx, (GroupMsg, FriendMsg)):
+                new_ctx = copy.deepcopy(ctx)
                 if isinstance(ctx, GroupMsg):
-                    refine_ctx = refine_pic_group_msg(ctx)
+                    if ctx.MsgType == MsgTypes.PicMsg:
+                        new_ctx = refine_pic_group_msg(new_ctx)
                 else:
-                    refine_ctx = refine_pic_friend_msg(ctx)
-                if refine_ctx.Content == string:
+                    if ctx.MsgType == MsgTypes.PicMsg:
+                        new_ctx = refine_pic_friend_msg(new_ctx)
+                if new_ctx.Content == string:
                     return func(ctx)
             return None
 
