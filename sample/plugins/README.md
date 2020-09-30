@@ -15,3 +15,4 @@
 | to_card     | 转卡片，可用于调试          |
 | verse       | 诗句                        |
 | auto_revoke | 关键字自动撤回              |
+| whatis      | 查网络缩写词意思            |
