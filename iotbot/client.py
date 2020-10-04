@@ -402,6 +402,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def __friend_msg_handler(self, msg):
         context: FriendMsg = model_map['OnFriendMsgs'](msg)
+        if context.CurrentQQ not in self.qq:
+            return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
         if context.FromUin in self.friend_blacklist:
@@ -417,6 +419,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def __group_msg_handler(self, msg):
         context: GroupMsg = model_map['OnGroupMsgs'](msg)
+        if context.CurrentQQ not in self.qq:
+            return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
         if context.FromGroupId in self.group_blacklist:
@@ -432,6 +436,8 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
 
     def __event_msg_handler(self, msg):
         context: EventMsg = model_map['OnEvents'](msg)
+        if context.CurrentQQ not in self.qq:
+            return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 中间件
         if self.__event_context_middleware is not None:
