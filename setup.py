@@ -16,7 +16,7 @@ long_description = read_files(['README.md', 'CHANGELOG.md'])
 meta = {}
 
 with io.open('./iotbot/version.py', encoding='utf-8') as f:
-    exec(f.read(), meta)
+    exec(f.read(), meta)  # pylint: disable=W0122
 
 setup(
     name="python-iotbot",
@@ -36,7 +36,6 @@ setup(
         'requests >= 2.23.0',
         'prettytable >= 0.7.2',
         'loguru >= 0.5.1',
-        'schedule >= 0.6.0',
     ],
     entry_points='''
         [console_scripts]

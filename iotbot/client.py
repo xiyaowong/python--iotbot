@@ -1,14 +1,12 @@
 import copy
 import functools
 import sys
-import time
 import traceback
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, List, Tuple, Union
 
 import socketio
-from schedule import Scheduler as _Scheduler
 
 from .config import config
 from .logger import logger
@@ -78,9 +76,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                 )
         else:
             logger.disable(__name__)
-
-        # 用于定时任务
-        self.scheduler = _Scheduler()
 
         # 手动添加的消息接收函数
         self.__friend_msg_receivers_from_hand = []
@@ -161,36 +156,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         '''已停用的插件名列表'''
         return self.plugMgr.removed_plugins
 
-    ########################################################################
-    # for scheduler
-    ########################################################################
-    def _run_padding(self):
-        logger.info(f'{len(self.scheduler.jobs)} tasks that are scheduled to run.')
-        while True:
-            # 定时任务不是主角，所以必须其他工作正常才运行
-            if self._exit:
-                return
-            s = self.scheduler
-            runnable_jobs = (job for job in s.jobs if job.should_run)
-            for job in sorted(runnable_jobs):
-                if hasattr(job.job_func, '__name__'):
-                    job_func_name = job.job_func.__name__
-                else:
-                    job_func_name = repr(job.job_func)
-                logger.info('Running task => %s' % job_func_name)
-                s._run_job(job)  # pylint: disable=protected-access
-            # 避免不必要的循环
-            # 因为定时任务间隔都很长，进入延时后并不能很好的判断self._exit来退出
-            # 所以这里每次只延时`delay`秒就判断一次是否应该退出
-            delay = 5
-            t = int(s.idle_seconds - 5)  # 延时不是必要的，减去5s抵消下面的时间消耗
-            if t <= 0:
-                continue
-            for _ in range(t // delay):
-                if self._exit:
-                    return
-                time.sleep(delay)
-
     ##########################################################################
     # decorators for registering hook function when connected or disconnected
     ##########################################################################
@@ -221,19 +186,6 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
                     f'GetWebConn -> {qq} => {x}'  # pylint: disable=cell-var-from-loop
                 ),
             )
-
-        # 启动定时任务
-        if len(self.scheduler.jobs) != 0 and not getattr(
-            # 服务端断线之后，socketio会自动重连，此时线程池没有关，重连成功后
-            # connect 函数会被重新调用，所以加一层判断，防止重复添加定时任务
-            self.scheduler,
-            'started',
-            False,
-        ):
-            self.__executor.submit(self._run_padding).add_done_callback(
-                self.__thread_pool_callback
-            )
-            self.scheduler.started = True
 
         # 连接成功执行用户定义的函数，如果有
         if self.__when_connected_do is not None:
