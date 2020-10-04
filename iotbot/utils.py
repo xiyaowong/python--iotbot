@@ -11,6 +11,7 @@ class MsgTypes:
     ReplyMsg = 'ReplyMsg'
     VoiceMsg = 'VoiceMsg'
     VideoMsg = 'VideoMsg'
+    PhoneMsg = 'PhoneMsg'
     RedBagMsg = 'RedBagMsg'
     TempSessionMsg = 'TempSessionMsg'
 

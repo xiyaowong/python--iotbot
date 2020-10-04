@@ -4,14 +4,10 @@ import copy
 import functools
 from typing import List
 
+from . import json
 from .exceptions import ContextTypeError
 from .model import EventMsg, FriendMsg, GroupMsg
 from .utils import EventNames, MsgTypes
-
-try:
-    import ujson as json
-except Exception:
-    import json
 
 
 def copy_ctx(f):

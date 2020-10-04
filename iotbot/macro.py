@@ -26,7 +26,7 @@ def showPic(code: int = None) -> str:
             40006 无(只显示大图无特效)
     """
     if code is None:
-        code = random.choice(list(range(40000, 40007)))
+        code = random.randint(40000, 40007)
     return '[秀图%d]' % code
 
 

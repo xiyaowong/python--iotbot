@@ -23,11 +23,7 @@ from .client import IOTBOT
 from .config import config
 from .logger import logger
 from .utils import check_schema
-
-try:
-    import ujson as json
-except Exception:
-    import json
+from . import json
 
 
 class _Task:
@@ -693,6 +689,16 @@ class Action:  # pylint:disable=R0904
         :param TaskID: 任务ID
         """
         return self.baseSender('POST', 'DelCrons', {'TaskID': TaskID}, **kwargs)
+
+    def send_phone_text_msg(self, content: str, **kwargs) -> dict:
+        """给手机发送消息"""
+        data = {
+            "ToUserUid": self.qq,
+            "SendToType": 2,
+            "SendMsgType": "PhoneMsg",
+            "Content": content,
+        }
+        return self.baseSender('POST', 'SendMsgV2', data, **kwargs)
 
     def baseSender(
         self,

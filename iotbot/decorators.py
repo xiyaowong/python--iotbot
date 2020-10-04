@@ -2,20 +2,15 @@ import copy
 import functools
 import re
 
-from .utils import MsgTypes
-
-try:
-    import ujson as json
-except ImportError:
-    import json
-
+from . import json
 from .model import FriendMsg, GroupMsg
 from .refine import (
     _PicFriendMsg,
     _PicGroupMsg,
     refine_pic_friend_msg,
-    refine_pic_group_msg
+    refine_pic_group_msg,
 )
+from .utils import MsgTypes
 
 
 def startswith(string: str, trim=True):

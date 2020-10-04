@@ -1,12 +1,8 @@
 from typing import List
 
+from . import json
 from .exceptions import InvalidConfigError
 from .utils import check_schema
-
-try:
-    import ujson as json
-except Exception:
-    import json
 
 
 class _config:

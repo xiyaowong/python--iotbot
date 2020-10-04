@@ -7,12 +7,8 @@ from typing import Dict, List
 
 from prettytable import PrettyTable
 
+from . import json
 from .typing import EventMsgReceiver, FriendMsgReceiver, GroupMsgReceiver
-
-try:
-    import ujson as json
-except ImportError:
-    import json
 
 
 class Plugin:
