@@ -52,7 +52,7 @@ class Config:
         if self.host is None:
             host = _c.get('host')
             if host is None:
-                self.host = 'http://127.0.0.0'
+                self.host = 'http://127.0.0.1'
             else:
                 self.host = check_schema(host)
 
