@@ -8,9 +8,9 @@ from typing import Callable, List, Tuple, Union
 
 import socketio
 
-from .config import config
-from .logger import logger
-from .model import EventMsg, FriendMsg, GroupMsg, model_map
+from .config import Config
+from .logger import enble_log_file, logger
+from .model import EventMsg, FriendMsg, GroupMsg
 from .plugin import PluginManager
 from .typing import EventMsgReceiver, FriendMsgReceiver, GroupMsgReceiver
 
@@ -34,6 +34,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     :param plugin_dir: 插件存放目录
     :param group_blacklist: 群黑名单, 此名单中的群聊消息不会被处理,默认为空，即全部处理
     :param friend_whitelist: 好友白名单，只有此名单中的好友消息才会被处理，默认为空，即全部处理
+    :param blocked_users: 用户黑名单，即包括群消息和好友消息, 该用户的消息都不会处理
     :param log: 是否开启日志
     :param log_file: 是否输出文件日志
     :param port: 运行端口
@@ -47,10 +48,11 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         plugin_dir: str = 'plugins',
         group_blacklist: List[int] = None,
         friend_blacklist: List[int] = None,
+        blocked_users: List[int] = None,
         log: bool = True,
         log_file: bool = True,
-        port: int = 8888,
-        host: str = 'http://127.0.0.1',
+        port: int = None,
+        host: str = None,
     ):
         if isinstance(qq, Sequence):
             self.qq = list(qq)
@@ -58,22 +60,16 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             self.qq = [qq]
         self.use_plugins = use_plugins
         self.plugin_dir = plugin_dir
-        self.host = config.host or host
-        self.port = config.port or port
-        self.group_blacklist = set(config.group_blacklist or group_blacklist or [])
-        self.friend_blacklist = set(config.friend_blacklist or friend_blacklist or [])
+        self.config = Config(
+            host, port, group_blacklist, friend_blacklist, blocked_users
+        )
 
-        # 作为程序是否应该退出的标志，以便后续用到，如定时任务
+        # 作为程序是否应该退出的标志，以便后续用到
         self._exit = False
 
         if log:
             if log_file:
-                logger.add(
-                    './logs/{time}.log',
-                    format='{time:YYYY-MM-DD HH:mm} {level}\t{message}',
-                    rotation='1 day',
-                    encoding='utf-8',
-                )
+                enble_log_file()
         else:
             logger.disable(__name__)
 
@@ -83,7 +79,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.__event_receivers_from_hand = []
 
         # webhook 里的消息接收函数，是特例
-        if config.webhook:
+        if self.config.webhook:
             from . import webhook  # pylint:disable=import-outside-toplevel
 
             # 直接加载进 `hand`
@@ -215,7 +211,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     def run(self):
         logger.info('Connecting to the server...')
         try:
-            self.socketio.connect(f'{self.host}:{self.port}', transports=['websocket'])
+            self.socketio.connect(self.config.address, transports=['websocket'])
         except Exception:
             logger.error(traceback.format_exc())
             self.close(1)
@@ -353,12 +349,15 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
             raise worker_exception
 
     def __friend_msg_handler(self, msg):
-        context: FriendMsg = model_map['OnFriendMsgs'](msg)
+        context = FriendMsg(msg)
         if context.CurrentQQ not in self.qq:
             return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
-        if context.FromUin in self.friend_blacklist:
+        if context.FromUin in self.config.friend_blacklist:
+            return
+        # 屏蔽用户
+        if context.FromUin in self.config.blocked_users:
             return
         # 中间件
         if self.__friend_context_middleware is not None:
@@ -370,12 +369,15 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.__executor.submit(self.__friend_context_distributor, context)
 
     def __group_msg_handler(self, msg):
-        context: GroupMsg = model_map['OnGroupMsgs'](msg)
+        context = GroupMsg(msg)
         if context.CurrentQQ not in self.qq:
             return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
         # 黑名单
-        if context.FromGroupId in self.group_blacklist:
+        if context.FromGroupId in self.config.group_blacklist:
+            return
+        # 屏蔽用户
+        if context.FromUserId in self.config.blocked_users:
             return
         # 中间件
         if self.__group_context_middleware is not None:
@@ -387,7 +389,7 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
         self.__executor.submit(self.__group_context_distributor, context)
 
     def __event_msg_handler(self, msg):
-        context: EventMsg = model_map['OnEvents'](msg)
+        context = EventMsg(msg)
         if context.CurrentQQ not in self.qq:
             return
         logger.info(f'{context.__class__.__name__} ->  {context.data}')
@@ -412,6 +414,9 @@ class IOTBOT:  # pylint: disable = too-many-instance-attributes
     on_event = _deco_creater('OnEvents')
 
     def __repr__(self):
-        return 'IOTBOT <{}> <host-{}> <port-{}>'.format(
-            " ".join([str(i) for i in self.qq]), self.host, self.port
+        return 'IOTBOT <{}> <host-{}> <port-{}> <address-{}>'.format(
+            " ".join([str(i) for i in self.qq]),
+            self.config.host,
+            self.config.port,
+            self.config.address,
         )

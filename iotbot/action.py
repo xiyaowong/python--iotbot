@@ -18,12 +18,10 @@ from typing import Callable, Generator, List, Union
 import requests
 from requests.exceptions import Timeout
 
-from . import macro
+from . import  json, macro
+from .config import Config
 from .client import IOTBOT
-from .config import config
 from .logger import logger
-from .utils import check_schema
-from . import json
 
 
 class _Task:
@@ -87,8 +85,6 @@ class Action:  # pylint:disable=R0904
     :param queue: 是否开启队列，开启后任务将按顺序发送并延时指定时间，此参数与`queue_delay`对应
                   启用后，发送方法`没有返回值`
     :param queue_delay: 与`队列`对应, 开启队列时发送每条消息间的延时, 保持默认即可
-    :param timeout: 等待IOTBOT响应时间和发送请求的延时
-    :param api_path: 方法路径
     :param port: 端口
     :param host: ip
     """
@@ -98,15 +94,10 @@ class Action:  # pylint:disable=R0904
         qq_or_bot: Union[int, IOTBOT] = None,
         queue: bool = False,
         queue_delay: Union[int, float] = 1.1,
-        timeout: int = 15,
-        api_path: str = '/v1/LuaApiCaller',
-        port: int = 8888,
-        host: str = 'http://127.0.0.1',
+        port: int = None,
+        host: str = None,
     ):
-        self.timeout = timeout
-        self.api_path = api_path
-        self.port = config.port or port
-        self.host = config.host or check_schema(host)
+        self.config = Config(host, port)
         if isinstance(qq_or_bot, IOTBOT):
             self.bind_bot(qq_or_bot)
         else:
@@ -431,7 +422,7 @@ class Action:  # pylint:disable=R0904
         '''刷新key二次登陆, 成功返回True， 失败返回False'''
         try:
             rep = self.s.get(
-                f'{self.host}:{self.port}/v1/RefreshKeys?qq={self.qq}', timeout=timeout
+                f'{self.config.address}/v1/RefreshKeys?qq={self.qq}', timeout=timeout
             )
             if rep.json()['Ret'] == 'ok':
                 return True
@@ -447,7 +438,7 @@ class Action:  # pylint:disable=R0904
 
     def get_status(self, timeout=20) -> dict:
         '''获取机器人状态'''
-        rep = self.s.get('{self.host}:{self.port}/v1/ClusterInfo', timeout=timeout)
+        rep = self.s.get(f'{self.config.address}/v1/ClusterInfo', timeout=timeout)
         return rep.json()
 
     def send_single_red_bag(self) -> dict:
@@ -524,7 +515,7 @@ class Action:  # pylint:disable=R0904
         }
         try:
             res = self.s.post(
-                f'{self.host}:{self.port}/v1/Group/Announce?qq={self.qq}',
+                f'{self.config.address}/v1/Group/Announce?qq={self.qq}',
                 data=data,
                 timeout=timeout,
                 **kwargs,
@@ -653,7 +644,7 @@ class Action:  # pylint:disable=R0904
         '''返回登录二维码的base64'''
         try:
             resp = self.s.get(
-                '{}:{}/v1/Login/GetQRcode'.format(self.host, self.port), timeout=10
+                '{}/v1/Login/GetQRcode'.format(self.config.address), timeout=10
             )
         except Exception as e:
             logger.error('http请求错误 %s' % str(e))
@@ -746,13 +737,12 @@ class Action:  # pylint:disable=R0904
         funcname: str,
         data: dict = None,
         timeout: int = None,
-        api_path: str = None,
         iot_timeout: int = None,
         bot_qq: int = None,
     ) -> dict:
         params = {
             'funcname': funcname,
-            'timeout': iot_timeout or self.timeout,
+            'timeout': iot_timeout,
             'qq': bot_qq or self.qq,
         }
         if data is None:
@@ -760,11 +750,11 @@ class Action:  # pylint:disable=R0904
         try:
             rep = self.s.request(
                 method=method,
-                url='{}:{}{}'.format(self.host, self.port, api_path or self.api_path),
+                url=f'{self.config.address}/v1/LuaApiCaller',
                 headers={'Content-Type': 'application/json'},
                 params=params,
                 json=data,
-                timeout=timeout or self.timeout,
+                timeout=timeout,
             )
             if rep.status_code != 200:
                 logger.error(
