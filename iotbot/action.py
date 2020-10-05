@@ -696,7 +696,6 @@ class Action:  # pylint:disable=R0904
         funcname: str,
         data: dict = None,
         timeout: int = None,
-        api_path: str = None,
         iot_timeout: int = None,
         bot_qq: int = None,
         **kwargs,
@@ -718,7 +717,6 @@ class Action:  # pylint:disable=R0904
             funcname=funcname,
             data=data,
             timeout=timeout,
-            api_path=api_path,
             iot_timeout=iot_timeout,
             bot_qq=bot_qq,
         )
@@ -758,7 +756,7 @@ class Action:  # pylint:disable=R0904
             if rep.status_code != 200:
                 logger.error(
                     f'HTTP响应码错误, 请检查地址端口是否正确, \
-                             {self.host}:{self.port} => {rep.status_code}'
+                             {self.config.address} => {rep.status_code}'
                 )
                 return {}
             response = rep.json()
