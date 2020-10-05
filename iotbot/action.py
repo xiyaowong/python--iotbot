@@ -113,8 +113,7 @@ class Action:  # pylint:disable=R0904
     def bind_bot(self, bot: IOTBOT):
         """绑定机器人"""
         self.qq = bot.qq[0]
-        self.port = bot.port
-        self.host = bot.host
+        self.config = bot.config
 
     def send_friend_text_msg(
         self, toUser: int, content: str, timeout=5, **kwargs
