@@ -1,3 +1,4 @@
+# bot端更新太快，该项目已不适用，请移步[botoy](https://github.com/xiyaowong/botoy)
 # python-iotbot
 
 [![pypi](https://img.shields.io/pypi/v/python-iotbot?style=flat-square 'pypi')](https://pypi.org/project/python-iotbot/)
